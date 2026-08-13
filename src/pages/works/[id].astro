@@ -70,6 +70,21 @@ const sameSeries = work.series
     </>
   )}
 
+  {work.commentary?.length > 0 && (
+    <>
+      <h2 class="section-title">詳しい解説</h2>
+      <p class="muted lead-note">この節にネタバレは含みません。結末に触れる話は下の「ネタバレ込みの解説」にまとめてあります。</p>
+      <div class="commentary">
+        {work.commentary.map((c) => (
+          <section class="cm">
+            <h3>{c.h}</h3>
+            <p>{c.p}</p>
+          </section>
+        ))}
+      </div>
+    </>
+  )}
+
   {work.stories.length > 0 && (
     <>
       <h2 class="section-title">収録作品</h2>
@@ -223,6 +238,16 @@ const sameSeries = work.series
   .char-list { list-style: none; padding-left: 0; display: grid; gap: 4px; }
   .char-list li { font-size: 0.95rem; }
   .series-order .current { color: var(--accent); }
+
+  .commentary { display: grid; gap: 4px; }
+  .cm { padding: 2px 0 6px; }
+  .cm h3 {
+    font-size: 1.02rem;
+    margin: 14px 0 2px;
+    padding-left: 11px;
+    border-left: 3px solid var(--line);
+  }
+  .cm p { margin: 0 0 0 11px; font-size: 0.94rem; }
 
   .reveals { display: grid; gap: 12px; }
   .reveal { padding: 14px 16px; }
