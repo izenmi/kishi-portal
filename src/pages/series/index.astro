@@ -1,0 +1,129 @@
+---
+import Base from '../../layouts/Base.astro';
+import WorkSymbol from '../../components/WorkSymbol.astro';
+import worksData from '../../data/works.json';
+import charactersData from '../../data/characters.json';
+
+const base = import.meta.env.BASE_URL;
+const { works, seriesDefs, genres } = worksData;
+
+const seriesList = Object.entries(seriesDefs).map(([key, label]) => ({
+  key,
+  label,
+  books: works.filter((w) => w.series === key).sort((a, b) => a.ym.localeCompare(b.ym)),
+}));
+
+const enomotoChars = charactersData.characters.filter((c) => c.id === 'enomoto' || c.id === 'junko');
+
+// ドラマ『鍵のかかった部屋』の原作となった3冊(Wikipedia のドラマ項目に基づく)
+const dramaSources = ['kagi', 'glass', 'kitsunebi'];
+---
+
+<Base title="シリーズ" description="防犯探偵・榎本シリーズと雨物語シリーズ。刊行順、収録短編、ドラマ化との対応をまとめました。">
+  <h1>シリーズ</h1>
+  <p class="muted">
+    貴志祐介の小説のうち、続きものとして書かれているのは2つのシリーズです。どちらも1冊ずつ独立して読めますが、刊行順に読むと人物の関係が積み上がっていきます。
+  </p>
+
+  {seriesList.map((s) => (
+    <section class="series-block">
+      <h2 class="section-title">{s.label}({s.books.length}冊)</h2>
+
+      {s.key === 'enomoto' && (
+        <p class="series-lead">
+          防犯ショップ店長の防犯コンサルタント<strong>榎本径</strong>と、弁護士<strong>青砥純子</strong>が密室殺人に挑むシリーズ。
+          全作品が密室ものに徹しており、純子が仮説を立てては榎本が反証していく「別解潰し」が基本の型になっています。
+          もともと榎本と純子は『硝子のハンマー』限りの人物にする予定でしたが、同作で使いきれなかったトリックを活かすためにシリーズ化されました。
+        </p>
+      )}
+      {s.key === 'ame' && (
+        <p class="series-lead">
+          上田秋成『雨月物語』を下敷きにした連作。怪談の枠組みの中で、怪異の出どころをミステリの論理で詰めていきます。
+          謎が解けても恐怖が解除されない——むしろ確定してしまう構造が共通しています。
+        </p>
+      )}
+
+      <ol class="books">
+        {s.books.map((w, i) => (
+          <li class="book card">
+            <div class="book-head">
+              <span class="book-no">第{i + 1}作</span>
+              <WorkSymbol id={w.id} genre={w.genre} size={64} title={w.title} />
+              <div>
+                <h3><a href={`${base}works/${w.id}/`}>{w.title}</a></h3>
+                <p class="muted book-meta">{w.year}年{Number(w.ym.slice(5))}月 / {w.publisher} / {w.form} / {genres[w.genre]}</p>
+              </div>
+            </div>
+            <p class="book-line">{w.logline}</p>
+            {w.stories.length > 0 && (
+              <ul class="stories">
+                {w.stories.map((st) => (
+                  <li><strong>{st.title}</strong>{st.note && <span class="muted"> — {st.note}</span>}</li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ol>
+    </section>
+  ))}
+
+  <h2 class="section-title">シリーズを貫く二人</h2>
+  <div class="grid grid-2">
+    {enomotoChars.map((c) => (
+      <div class="card person" data-sp={c.sp}>
+        <strong><a href={`${base}characters/${c.id}/`}>{c.name}</a></strong>
+        <span class="muted"> — {c.role}</span>
+        <p>{c.bio}</p>
+      </div>
+    ))}
+  </div>
+  <p class="muted small">
+    この2人の紹介は『硝子のハンマー』を読了にすると表示されます。
+  </p>
+
+  <h2 class="section-title">ドラマ『鍵のかかった部屋』との対応</h2>
+  <p>
+    2012年にフジテレビ系で放送された連続ドラマ『鍵のかかった部屋』(全11話・大野智主演)は、
+    榎本シリーズの当時の既刊3冊を原作としています。タイトルは第3作から取られていますが、第1作・第2作のエピソードも使われています。
+  </p>
+  <ul class="drama-src">
+    {dramaSources.map((id) => {
+      const w = works.find((x) => x.id === id)!;
+      return (
+        <li><a href={`${base}works/${w.id}/`}>{w.title}</a> <span class="muted">({w.year}年)</span></li>
+      );
+    })}
+  </ul>
+  <p class="muted small">
+    第4作『ミステリークロック』(2017年)はドラマ放送後の刊行のため、原作には含まれていません。
+    著者本人はドラマ第3話に毒島薫役で出演しています。
+  </p>
+</Base>
+
+<style>
+  h1 { margin-bottom: 0.3rem; }
+  .series-lead { font-size: 0.95rem; }
+  .books { list-style: none; padding: 0; display: grid; gap: 14px; }
+  .book { padding: 16px; }
+  .book-head { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .book-no {
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    align-self: flex-start;
+  }
+  .book h3 { margin: 0; font-size: 1.12rem; }
+  .book h3 a { text-decoration: none; }
+  .book h3 a:hover { color: var(--accent); }
+  .book-meta { font-size: 0.8rem; margin: 2px 0 0; }
+  .book-line { margin: 12px 0 0; font-size: 0.94rem; }
+  .stories { margin: 10px 0 0; padding-left: 1.3em; font-size: 0.88rem; }
+  .stories li { margin-bottom: 4px; }
+
+  .person { padding: 14px 16px; }
+  .person p { margin: 6px 0 0; font-size: 0.88rem; }
+  .drama-src { padding-left: 1.3em; }
+  .small { font-size: 0.83rem; }
+</style>

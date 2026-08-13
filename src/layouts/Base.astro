@@ -1,0 +1,564 @@
+---
+import '../styles/global.css';
+import worksData from '../data/works.json';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title,
+  description = '小説家・貴志祐介の非公式ファンサイト。全小説の作品ガイド・作風マップ・読書ガイド診断・作品横断の人物名鑑を、「読んだ作品だけ解禁される」ネタバレ制御つきで。',
+} = Astro.props;
+const pageTitle = title ? `${title} | 貴志祐介ポータル` : '貴志祐介ポータル - 深淵の書架';
+const base = import.meta.env.BASE_URL;
+
+// ネタバレ制御の対象は単著小説のみ(共著など情報不足のものは除く)
+const spWorks = worksData.works
+  .filter((w) => !w.partial)
+  .map((w) => ({ id: w.id, title: w.title, year: w.year, genre: w.genre }));
+
+const presets = [
+  { label: '代表作5作を読んだ', ids: ['kuroiie', 'aonohonoo', 'shinsekai', 'akunokyouten', 'kagi'] },
+  {
+    label: '映像化された作品を読んだ',
+    ids: ['isola', 'kuroiie', 'aonohonoo', 'glass', 'kitsunebi', 'shinsekai', 'akunokyouten', 'kagi'],
+  },
+  { label: '防犯探偵・榎本シリーズを読んだ', ids: ['glass', 'kitsunebi', 'kagi', 'mysteryclock'] },
+];
+
+const navGroups: { label: string; href?: string; items?: { href: string; label: string }[] }[] = [
+  { label: '作品一覧', href: `${base}works/` },
+  {
+    label: '作品を選ぶ',
+    items: [
+      { href: `${base}guide/`, label: '読書ガイド診断' },
+      { href: `${base}map/`, label: '作風マップ' },
+      { href: `${base}profiles/`, label: '全作品データ表' },
+      { href: `${base}series/`, label: '防犯探偵・榎本シリーズ' },
+    ],
+  },
+  {
+    label: '作品を読み解く',
+    items: [
+      { href: `${base}characters/`, label: '人物名鑑' },
+      { href: `${base}relations/`, label: '人物相関図' },
+      { href: `${base}glossary/`, label: '用語集' },
+    ],
+  },
+  {
+    label: '作家をたどる',
+    items: [
+      { href: `${base}timeline/`, label: '年譜' },
+      { href: `${base}awards/`, label: '受賞・ランキング' },
+      { href: `${base}media/`, label: '映像化・漫画化' },
+    ],
+  },
+  { label: 'クイズ', href: `${base}quiz/` },
+  { label: 'サイト情報', href: `${base}about/` },
+];
+---
+
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="icon" type="image/svg+xml" href={`${base}favicon.svg`} />
+    <link rel="manifest" href={`${base}manifest.webmanifest`} />
+    <link rel="apple-touch-icon" href={`${base}icons/apple-touch-icon.png`} />
+    <meta name="theme-color" content="#1a1d24" />
+    <script is:inline>
+      // ネタバレ処理が終わるまで sp 対象を隠す(フラッシュ防止)
+      document.documentElement.classList.add('sp-pending');
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href={base}>
+          <span class="brand-mark">貴志</span>
+          <span class="brand-text">
+            <strong>貴志祐介ポータル</strong>
+            <small>貴志祐介 非公式ファンサイト</small>
+          </span>
+        </a>
+        <nav class="site-nav" id="site-nav">
+          {navGroups.map((g) =>
+            g.href ? (
+              <a class="nav-link" href={g.href}>{g.label}</a>
+            ) : (
+              <div class="nav-group">
+                <button class="nav-group-btn" type="button" aria-haspopup="true">
+                  {g.label} <span class="nav-caret">▾</span>
+                </button>
+                <div class="nav-dropdown">
+                  {g.items!.map((n) => <a href={n.href}>{n.label}</a>)}
+                </div>
+              </div>
+            )
+          )}
+        </nav>
+        <button id="sp-btn" class="sp-btn" type="button" title="読んだ作品を設定する">
+          📖 <span id="sp-btn-label">未設定</span>
+        </button>
+        <button id="nav-toggle" class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="メニュー">
+          ☰
+        </button>
+      </div>
+    </header>
+
+    <main class="container">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>
+          当サイトは小説家・貴志祐介氏の<strong>非公式ファンサイト</strong>です。
+          著者・出版社・映像化の各製作委員会とは一切関係ありません。図版はすべて管理人による自作で、書影・人物の似顔絵は掲載していません。
+        </p>
+        <p><a href={`${base}about/`}>このサイトについて</a></p>
+      </div>
+    </footer>
+
+    <dialog id="sp-dialog" class="sp-dialog">
+      <form method="dialog">
+        <h2>📖 どの作品を読みましたか?</h2>
+        <p class="muted">
+          チェックした作品の情報だけが解禁されます。未チェックの作品の結末・仕掛け・人物は自動で伏せられます。設定はこの端末にのみ保存されます。
+        </p>
+        <div class="sp-presets">
+          {presets.map((p) => (
+            <button type="button" class="sp-preset" data-ids={p.ids.join(',')}>{p.label}</button>
+          ))}
+          <div class="sp-preset-row">
+            <button type="button" class="sp-preset sp-preset-sm" data-all="1">全部読んだ(全解禁)</button>
+            <button type="button" class="sp-preset sp-preset-sm" data-none="1">全部外す(完全回避)</button>
+          </div>
+        </div>
+        <div class="sp-checklist" id="sp-checklist">
+          {spWorks.map((w) => (
+            <label class="sp-check">
+              <input type="checkbox" value={w.id} />
+              <span class="genre" data-genre={w.genre}>{w.year}</span>
+              <span class="sp-check-title">{w.title}</span>
+            </label>
+          ))}
+        </div>
+        <div class="sp-actions">
+          <span class="muted" id="sp-dialog-count"></span>
+          <button type="submit" class="sp-save">この設定で見る</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script is:inline define:vars={{ spWorks }}>
+      (() => {
+        const KEY = 'kishi-read';
+        const TITLES = Object.fromEntries(spWorks.map((w) => [w.id, w.title]));
+        const ALL = spWorks.map((w) => w.id);
+
+        let stored = null;
+        try {
+          stored = localStorage.getItem(KEY);
+        } catch (e) {
+          /* プライベートモード等では設定を保持しないだけ */
+        }
+        let read = new Set(stored === null ? [] : JSON.parse(stored));
+        const configured = stored !== null;
+
+        const save = () => {
+          try {
+            localStorage.setItem(KEY, JSON.stringify([...read]));
+          } catch (e) {
+            /* 保存できなくても表示は成立する */
+          }
+        };
+
+        // data-sp="a,b" は「a も b も既読」のときだけ解禁する(両方に触れるネタバレのため)
+        const missingOf = (attr) =>
+          String(attr || '')
+            .split(',')
+            .map((s) => s.trim())
+            .filter((id) => id && !read.has(id));
+
+        const labelFor = (missing) => {
+          const first = TITLES[missing[0]] || '未読作品';
+          return missing.length > 1 ? `『${first}』ほか${missing.length - 1}作` : `『${first}』`;
+        };
+
+        const btnLabel = () => {
+          if (!configured) return '未設定';
+          if (read.size === 0) return 'ネタバレ完全回避';
+          if (read.size >= ALL.length) return '全作読了';
+          return `${read.size}作を読了`;
+        };
+
+        const apply = () => {
+          document.querySelectorAll('[data-sp]').forEach((el) => {
+            const missing = missingOf(el.dataset.sp);
+            const locked = missing.length > 0;
+            if (el.hasAttribute('data-sp-hide')) {
+              el.classList.toggle('sp-hidden', locked);
+            } else {
+              if (locked) el.dataset.spLabel = labelFor(missing);
+              el.classList.toggle('sp-locked', locked && el.dataset.spOpen !== '1');
+            }
+          });
+          document.querySelectorAll('[data-sp-count]').forEach((box) => {
+            const n = box.querySelectorAll('.sp-hidden').length;
+            const note = box.querySelector('.sp-note');
+            if (note) {
+              note.textContent =
+                n > 0 ? `🔒 まだ読んでいない作品の ${n} 件を非表示にしています(右上の📖から変更できます)` : '';
+              note.style.display = n > 0 ? '' : 'none';
+            }
+          });
+          document.querySelectorAll('.read-toggle[data-work]').forEach((b) => {
+            const on = read.has(b.dataset.work);
+            b.setAttribute('aria-pressed', String(on));
+            const t = b.querySelector('.read-toggle-label');
+            if (t) t.textContent = on ? '読了済み' : '読了にする';
+          });
+          const lbl = document.getElementById('sp-btn-label');
+          if (lbl) lbl.textContent = btnLabel();
+          document.documentElement.classList.remove('sp-pending');
+          document.dispatchEvent(new CustomEvent('kishi:read', { detail: { read: [...read] } }));
+        };
+
+        window.KISHI = {
+          get read() {
+            return [...read];
+          },
+          has(id) {
+            return read.has(id);
+          },
+          toggle(id) {
+            if (read.has(id)) read.delete(id);
+            else read.add(id);
+            save();
+            apply();
+          },
+          setAll(ids) {
+            read = new Set(ids);
+            save();
+            apply();
+          },
+        };
+
+        // ロックされた箇所をタップすると、その要素だけ開示する
+        document.addEventListener('click', (e) => {
+          const locked = e.target.closest('.sp-locked');
+          if (locked) {
+            locked.dataset.spOpen = '1';
+            locked.classList.remove('sp-locked');
+            e.preventDefault();
+            return;
+          }
+          const toggle = e.target.closest('.read-toggle[data-work]');
+          if (toggle) {
+            window.KISHI.toggle(toggle.dataset.work);
+          }
+        });
+
+        const dialog = document.getElementById('sp-dialog');
+        const checklist = document.getElementById('sp-checklist');
+        const boxes = () => [...checklist.querySelectorAll('input[type=checkbox]')];
+        const dialogCount = document.getElementById('sp-dialog-count');
+
+        const syncDialogCount = () => {
+          const n = boxes().filter((b) => b.checked).length;
+          dialogCount.textContent = `${n} / ${ALL.length} 作`;
+        };
+        const setBoxes = (ids) => {
+          const s = new Set(ids);
+          boxes().forEach((b) => (b.checked = s.has(b.value)));
+          syncDialogCount();
+        };
+
+        checklist.addEventListener('change', syncDialogCount);
+
+        document.getElementById('sp-btn').addEventListener('click', () => {
+          setBoxes([...read]);
+          dialog.showModal();
+        });
+        dialog.querySelectorAll('.sp-preset').forEach((b) => {
+          b.addEventListener('click', () => {
+            if (b.dataset.all) setBoxes(ALL);
+            else if (b.dataset.none) setBoxes([]);
+            else setBoxes(b.dataset.ids.split(','));
+          });
+        });
+        // form method=dialog の submit で確定する
+        dialog.addEventListener('close', () => {
+          window.KISHI.setAll(boxes().filter((b) => b.checked).map((b) => b.value));
+        });
+
+        if (!configured) {
+          // 初回訪問: まず選んでもらう
+          window.addEventListener('DOMContentLoaded', () => dialog.showModal());
+        }
+        window.addEventListener('DOMContentLoaded', apply);
+
+        // モバイルメニュー
+        const header = document.querySelector('.site-header');
+        const navToggle = document.getElementById('nav-toggle');
+        navToggle.addEventListener('click', () => {
+          const open = header.classList.toggle('nav-open');
+          navToggle.setAttribute('aria-expanded', String(open));
+          navToggle.textContent = open ? '✕' : '☰';
+        });
+        document.querySelectorAll('.site-nav a').forEach((a) =>
+          a.addEventListener('click', () => header.classList.remove('nav-open'))
+        );
+
+        // PWA
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker
+              .register(document.querySelector('link[rel=manifest]').href.replace('manifest.webmanifest', 'sw.js'))
+              .catch(() => {});
+          });
+        }
+      })();
+    </script>
+
+    <style is:global>
+      html.sp-pending [data-sp] { visibility: hidden; }
+
+      .site-header {
+        background: var(--noir);
+        color: var(--noir-ink);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        box-shadow: var(--shadow);
+      }
+      .header-inner {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+      }
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: var(--accent);
+        color: var(--accent-ink);
+        font-weight: 800;
+        font-size: 0.95rem;
+        letter-spacing: 0.05em;
+      }
+      .brand-text { display: flex; flex-direction: column; line-height: 1.25; }
+      .brand-text strong { font-size: 1.05rem; }
+      .brand-text small { font-size: 0.68rem; opacity: 0.75; }
+      .site-nav {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        margin-left: auto;
+      }
+      .nav-link, .nav-group-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        text-decoration: none;
+        padding: 7px 12px;
+        border-radius: 8px;
+        font-size: 0.92rem;
+        color: var(--noir-ink);
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .nav-link:hover, .nav-group:hover .nav-group-btn { background: rgb(255 255 255 / 0.12); }
+      .nav-caret { font-size: 0.7em; opacity: 0.7; }
+      .nav-group { position: relative; }
+      .nav-dropdown {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 14em;
+        background: var(--noir);
+        border: 1px solid rgb(255 255 255 / 0.16);
+        border-radius: 10px;
+        padding: 6px;
+        box-shadow: 0 14px 30px rgb(0 0 0 / 0.35);
+        z-index: 20;
+      }
+      .nav-group:hover .nav-dropdown, .nav-group:focus-within .nav-dropdown { display: block; }
+      .nav-dropdown a {
+        display: block;
+        text-decoration: none;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.88rem;
+        white-space: nowrap;
+      }
+      .nav-dropdown a:hover { background: rgb(255 255 255 / 0.12); }
+      .sp-btn {
+        border: 1px solid rgb(255 255 255 / 0.3);
+        background: rgb(255 255 255 / 0.08);
+        color: var(--noir-ink);
+        border-radius: 999px;
+        padding: 5px 12px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        font-family: inherit;
+        white-space: nowrap;
+      }
+      .sp-btn:hover { background: rgb(255 255 255 / 0.16); }
+      .nav-toggle {
+        display: none;
+        border: 1px solid rgb(255 255 255 / 0.3);
+        background: rgb(255 255 255 / 0.08);
+        color: var(--noir-ink);
+        border-radius: 8px;
+        padding: 4px 11px;
+        font-size: 1.05rem;
+        cursor: pointer;
+      }
+      @media (max-width: 980px) {
+        .nav-toggle { display: inline-block; }
+        .site-nav { display: none; }
+        .site-header.nav-open .site-nav {
+          display: flex;
+          flex-direction: column;
+          gap: 0;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          background: var(--noir);
+          border-top: 1px solid rgb(255 255 255 / 0.15);
+          box-shadow: 0 12px 24px rgb(0 0 0 / 0.35);
+          padding: 6px 12px 14px;
+          max-height: calc(100vh - 70px);
+          overflow-y: auto;
+          align-items: stretch;
+        }
+        .site-header.nav-open .nav-link {
+          padding: 12px 10px;
+          font-size: 0.98rem;
+          border-bottom: 1px solid rgb(255 255 255 / 0.08);
+        }
+        .site-header.nav-open .nav-group { position: static; }
+        .site-header.nav-open .nav-group-btn {
+          width: 100%;
+          padding: 12px 10px 4px;
+          font-size: 0.74rem;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          opacity: 0.65;
+          pointer-events: none;
+        }
+        .site-header.nav-open .nav-caret { display: none; }
+        .site-header.nav-open .nav-dropdown {
+          display: block;
+          position: static;
+          background: none;
+          border: none;
+          box-shadow: none;
+          padding: 0 0 4px 8px;
+        }
+        .site-header.nav-open .nav-dropdown a {
+          padding: 10px 10px;
+          font-size: 0.95rem;
+          border-bottom: 1px solid rgb(255 255 255 / 0.08);
+          white-space: normal;
+        }
+      }
+
+      main.container { padding-top: 20px; padding-bottom: 48px; min-height: 60vh; }
+
+      .site-footer {
+        border-top: 1px solid var(--line);
+        background: var(--surface);
+        padding: 20px 0 28px;
+        font-size: 0.8rem;
+        color: var(--ink-2);
+      }
+
+      .sp-dialog {
+        border: none;
+        border-radius: var(--radius);
+        max-width: 560px;
+        width: calc(100vw - 32px);
+        padding: 22px;
+        background: var(--surface);
+        color: var(--ink);
+        box-shadow: 0 10px 40px rgb(0 0 0 / 0.4);
+      }
+      .sp-dialog::backdrop { background: rgb(16 18 22 / 0.68); }
+      .sp-dialog h2 { margin: 0 0 6px; font-size: 1.15rem; }
+      .sp-presets { display: grid; gap: 8px; margin: 14px 0; }
+      .sp-preset-row { display: flex; gap: 8px; }
+      .sp-preset {
+        text-align: left;
+        padding: 9px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--surface-2);
+        color: var(--ink);
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-family: inherit;
+      }
+      .sp-preset-sm { flex: 1; text-align: center; font-size: 0.84rem; }
+      .sp-preset:hover { border-color: var(--accent); }
+      .sp-checklist {
+        display: grid;
+        gap: 2px;
+        max-height: min(46vh, 340px);
+        overflow-y: auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 8px;
+        margin-bottom: 14px;
+      }
+      .sp-check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 6px;
+        border-radius: 6px;
+        font-size: 0.88rem;
+        cursor: pointer;
+      }
+      .sp-check:hover { background: var(--surface-2); }
+      .sp-check input { width: 17px; height: 17px; accent-color: var(--accent); flex: none; }
+      .sp-check .genre { flex: none; font-size: 0.68rem; }
+      .sp-check-title { line-height: 1.35; }
+      .sp-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+      .sp-save {
+        background: var(--accent);
+        color: var(--accent-ink);
+        border: none;
+        border-radius: 8px;
+        padding: 9px 18px;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: inherit;
+      }
+    </style>
+  </body>
+</html>

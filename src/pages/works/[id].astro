@@ -1,0 +1,266 @@
+---
+import Base from '../../layouts/Base.astro';
+import WorkSymbol from '../../components/WorkSymbol.astro';
+import worksData from '../../data/works.json';
+import charactersData from '../../data/characters.json';
+import mediaData from '../../data/media.json';
+import awardsData from '../../data/awards.json';
+
+export function getStaticPaths() {
+  return worksData.works.map((w) => ({ params: { id: w.id }, props: { work: w } }));
+}
+
+const { work } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const { genres, seriesDefs, axisLabels, works } = worksData;
+
+const byId = Object.fromEntries(works.map((w) => [w.id, w]));
+const chars = charactersData.characters.filter((c) => c.work === work.id);
+const media = mediaData.items.filter((m) => m.workId === work.id);
+const prizes = awardsData.prizes.filter((p) => p.workId === work.id);
+const rankings = awardsData.rankings.flatMap((r) =>
+  r.entries.filter((e) => e.workId === work.id).map((e) => ({ name: r.name, ...e }))
+);
+const related = (work.related ?? []).map((id) => byId[id]).filter(Boolean);
+const sameSeries = work.series
+  ? works.filter((w) => w.series === work.series).sort((a, b) => a.ym.localeCompare(b.ym))
+  : [];
+---
+
+<Base title={work.title} description={`${work.title}(${work.year}年・${work.publisher})の作品ガイド。ネタバレなしのあらすじと、読了後に解禁される解説。`}>
+  <nav class="crumbs muted"><a href={`${base}works/`}>作品一覧</a> › {work.title}</nav>
+
+  <header class="work-head">
+    <div class="head-sym"><WorkSymbol id={work.id} genre={work.genre} size={150} title={work.title} /></div>
+    <div class="head-body">
+      <div class="work-meta">
+        <span class="genre" data-genre={work.genre}>{genres[work.genre]}</span>
+        {work.series && <span class="series-chip" data-series={work.series}>{seriesDefs[work.series]}</span>}
+        {work.debut && <span class="series-chip">デビュー作</span>}
+      </div>
+      <h1>{work.title}</h1>
+      <p class="kana muted">{work.kana}</p>
+      <p class="pub muted">
+        {work.year}年{Number(work.ym.slice(5))}月 / {work.publisher} / {work.form}
+        {work.coauthor && <> / {work.coauthor} との共著</>}
+      </p>
+      <p class="logline">{work.logline}</p>
+      {!work.partial && (
+        <button class="read-toggle" type="button" data-work={work.id} aria-pressed="false">
+          <span class="read-toggle-label">読了にする</span>
+        </button>
+      )}
+    </div>
+  </header>
+
+  {work.cw.length > 0 && (
+    <p class="cw">
+      <strong>取り扱う題材:</strong> {work.cw.join(' / ')}
+      <br /><span class="muted">この表示はネタバレ設定に関係なく常に出ます。読む前に知っておきたい方のための情報です。</span>
+    </p>
+  )}
+
+  <h2 class="section-title">あらすじ(ネタバレなし)</h2>
+  <p class="synopsis">{work.synopsis}</p>
+
+  {work.hook.length > 0 && (
+    <>
+      <h2 class="section-title">読みどころ</h2>
+      <ul class="hooks">{work.hook.map((h) => <li>{h}</li>)}</ul>
+    </>
+  )}
+
+  {work.stories.length > 0 && (
+    <>
+      <h2 class="section-title">収録作品</h2>
+      <ol class="stories">
+        {work.stories.map((s) => (
+          <li><strong>{s.title}</strong>{s.note && <span class="muted"> — {s.note}</span>}</li>
+        ))}
+      </ol>
+    </>
+  )}
+
+  {work.reveal.length > 0 && (
+    <>
+      <h2 class="section-title">ネタバレ込みの解説</h2>
+      <p class="muted lead-note">
+        以下はこの作品を<strong>読了にする</strong>と表示されます(個別にタップして開くこともできます)。
+      </p>
+      <div class="reveals">
+        {work.reveal.map((r) => (
+          <div class="reveal card" data-sp={r.sp}>
+            <p>{r.text}</p>
+            {r.sp.includes(',') && (
+              <p class="reveal-src muted">
+                {r.sp.split(',').map((id) => `『${byId[id.trim()]?.title ?? id}』`).join(' と ')} の両方に関わる話
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
+  )}
+
+  {chars.length > 0 && (
+    <>
+      <h2 class="section-title">主な登場人物</h2>
+      <ul class="char-list">
+        {chars.map((c) => (
+          <li>
+            <a href={`${base}characters/${c.id}/`}>{c.name}</a>
+            <span class="muted"> — {c.role}</span>
+          </li>
+        ))}
+      </ul>
+    </>
+  )}
+
+  {(prizes.length > 0 || rankings.length > 0) && (
+    <>
+      <h2 class="section-title">受賞・ランキング</h2>
+      <ul class="award-list">
+        {prizes.map((p) => (
+          <li><strong>{p.year}年 {p.name}</strong> {p.result}{p.note && <span class="muted"> — {p.note}</span>}</li>
+        ))}
+        {rankings.map((r) => (
+          <li class="muted">{r.name} {r.year}年 第{r.rank}位</li>
+        ))}
+      </ul>
+    </>
+  )}
+
+  {media.length > 0 && (
+    <>
+      <h2 class="section-title">映像化・漫画化</h2>
+      <ul class="media-list">
+        {media.map((m) => (
+          <li>
+            <strong>{mediaData.types[m.type].label}『{m.title}』</strong>({m.year})
+            <br /><span class="muted">{m.staff}{m.cast && ` / 出演:${m.cast}`}</span>
+            {m.note && <><br /><span class="muted">{m.note}</span></>}
+          </li>
+        ))}
+      </ul>
+      <p class="muted"><a href={`${base}media/`}>映像化・漫画化の一覧を見る →</a></p>
+    </>
+  )}
+
+  {sameSeries.length > 1 && (
+    <>
+      <h2 class="section-title">{seriesDefs[work.series]}の刊行順</h2>
+      <ol class="series-order">
+        {sameSeries.map((w) => (
+          <li class={w.id === work.id ? 'current' : ''}>
+            {w.id === work.id ? <strong>{w.title}</strong> : <a href={`${base}works/${w.id}/`}>{w.title}</a>}
+            <span class="muted"> ({w.year})</span>
+          </li>
+        ))}
+      </ol>
+    </>
+  )}
+
+  {related.length > 0 && (
+    <>
+      <h2 class="section-title">近い読み心地の作品</h2>
+      <div class="grid grid-3 related">
+        {related.map((w) => (
+          <a class="rel-card card" href={`${base}works/${w.id}/`}>
+            <WorkSymbol id={w.id} genre={w.genre} size={64} title={w.title} />
+            <span>
+              <strong>{w.title}</strong>
+              <br /><span class="muted">{w.year}年 / {genres[w.genre]}</span>
+            </span>
+          </a>
+        ))}
+      </div>
+    </>
+  )}
+
+  {work.axes && (
+    <>
+      <h2 class="section-title">読み心地の目安</h2>
+      <div class="axes card">
+        {Object.entries(axisLabels).map(([k, label]) => (
+          <div class="axis-row">
+            <span class="axis-label">{label}</span>
+            <span class="axis-bar"><span class="axis-fill" style={`width:${work.axes[k]}%`}></span></span>
+            <span class="axis-val muted">{work.axes[k]}</span>
+          </div>
+        ))}
+        <p class="muted axis-note">
+          管理人の主観による目安です。<a href={`${base}map/`}>作風マップ</a>で全作品の位置関係を見られます。
+        </p>
+      </div>
+    </>
+  )}
+</Base>
+
+<style>
+  .crumbs { font-size: 0.82rem; margin-bottom: 10px; }
+  .work-head {
+    display: flex;
+    gap: 22px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+  }
+  .head-sym { flex: none; line-height: 0; }
+  .head-body { min-width: 0; }
+  .work-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+  h1 { margin: 0 0 2px; font-size: 1.7rem; }
+  .kana { font-size: 0.8rem; margin: 0; }
+  .pub { font-size: 0.85rem; margin: 4px 0 10px; }
+  .logline {
+    font-size: 1.02rem;
+    margin: 0 0 12px;
+    padding-left: 12px;
+    border-left: 3px solid var(--accent);
+  }
+  .synopsis { font-size: 0.98rem; }
+  .lead-note { font-size: 0.84rem; margin-top: -0.4rem; }
+  .hooks, .stories, .char-list, .award-list, .media-list, .series-order { padding-left: 1.3em; }
+  .hooks li, .stories li, .award-list li, .media-list li, .series-order li { margin-bottom: 8px; }
+  .char-list { list-style: none; padding-left: 0; display: grid; gap: 4px; }
+  .char-list li { font-size: 0.95rem; }
+  .series-order .current { color: var(--accent); }
+
+  .reveals { display: grid; gap: 12px; }
+  .reveal { padding: 14px 16px; }
+  .reveal p { margin: 0; }
+  .reveal-src { font-size: 0.78rem; margin-top: 6px !important; }
+
+  .related { margin-top: 4px; }
+  .rel-card {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 12px;
+    text-decoration: none;
+    font-size: 0.88rem;
+  }
+  .rel-card:hover { border-color: var(--accent); }
+
+  .axes { padding: 16px; }
+  .axis-row {
+    display: grid;
+    grid-template-columns: 5.5em 1fr 2.5em;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+  }
+  .axis-bar {
+    display: block;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+  .axis-fill { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+  .axis-val { text-align: right; font-size: 0.8rem; }
+  .axis-note { font-size: 0.8rem; margin: 10px 0 0; }
+
+  @media (max-width: 560px) {
+    .work-head { flex-direction: column; gap: 14px; }
+  }
+</style>

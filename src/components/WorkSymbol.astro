@@ -1,0 +1,285 @@
+---
+// 作品ごとのシンボルSVG。
+// 小説には公式のビジュアルがなく、映像化キャストを描けば実在の俳優の似顔絵になってしまうため、
+// 人物の絵は一切描かず、作品を象徴する図像だけを自作している。
+interface Props {
+  id: string;
+  genre?: string;
+  size?: number;
+  title?: string;
+}
+const { id, genre = 'other', size = 120, title = '' } = Astro.props;
+
+const genreVar: Record<string, string> = {
+  horror: 'var(--genre-horror)',
+  mystery: 'var(--genre-mystery)',
+  sf: 'var(--genre-sf)',
+  suspense: 'var(--genre-suspense)',
+  other: 'var(--genre-other)',
+};
+const c = genreVar[genre] ?? genreVar.other;
+---
+
+<svg
+  class="work-symbol"
+  width={size}
+  height={size}
+  viewBox="0 0 120 120"
+  role="img"
+  aria-label={title ? `${title} のシンボル` : '作品シンボル'}
+  style={`--sym: ${c};`}
+>
+  <rect x="0" y="0" width="120" height="120" rx="14" class="sym-bg" />
+
+  {id === 'isola' && (
+    <g class="sym-fg">
+      {/* 重なり合う人格の輪郭。最も濃い一つが十三番目 */}
+      <ellipse cx="48" cy="58" rx="22" ry="27" class="sym-line" opacity="0.3" />
+      <ellipse cx="56" cy="58" rx="22" ry="27" class="sym-line" opacity="0.45" />
+      <ellipse cx="64" cy="58" rx="22" ry="27" class="sym-line" opacity="0.6" />
+      <ellipse cx="72" cy="58" rx="22" ry="27" class="sym-fill" />
+      <circle cx="66" cy="52" r="3" class="sym-bg-dot" />
+      <circle cx="79" cy="52" r="3" class="sym-bg-dot" />
+      <path d="M64 72 Q72 66 80 72" class="sym-line-bg" />
+    </g>
+  )}
+
+  {id === 'kuroiie' && (
+    <g class="sym-fg">
+      {/* 黒い家。灯りのついた一室だけが赤い */}
+      <path d="M22 58 L60 28 L98 58 L98 98 L22 98 Z" class="sym-fill" />
+      <rect x="52" y="72" width="16" height="26" class="sym-bg-dot" />
+      <rect x="33" y="66" width="14" height="14" class="sym-accent" />
+      <rect x="73" y="66" width="14" height="14" class="sym-bg-dot" opacity="0.35" />
+      <path d="M16 60 L60 25 L104 60" class="sym-line" />
+    </g>
+  )}
+
+  {id === 'tenshi' && (
+    <g class="sym-fg">
+      {/* 羽音の波紋と、その中心の虫 */}
+      <circle cx="60" cy="60" r="40" class="sym-line" opacity="0.25" />
+      <circle cx="60" cy="60" r="29" class="sym-line" opacity="0.4" />
+      <circle cx="60" cy="60" r="18" class="sym-line" opacity="0.6" />
+      <path d="M60 46 Q42 40 40 58 Q46 68 60 62 Q74 68 80 58 Q78 40 60 46 Z" class="sym-fill" />
+      <path d="M60 46 L60 78" class="sym-line" stroke-width="4" />
+      <path d="M60 78 L54 86 M60 78 L66 86" class="sym-line" stroke-width="3" />
+    </g>
+  )}
+
+  {id === 'crimson' && (
+    <g class="sym-fg">
+      {/* 横縞の岩山と、その底の迷路 */}
+      <path d="M18 96 L34 44 L50 96 Z" class="sym-fill" />
+      <path d="M52 96 L72 32 L92 96 Z" class="sym-fill" opacity="0.75" />
+      <path d="M22 84 H94 M26 72 H92 M32 60 H88" class="sym-line-bg" stroke-width="3" />
+      <path d="M20 104 H100" class="sym-accent-line" />
+    </g>
+  )}
+
+  {id === 'aonohonoo' && (
+    <g class="sym-fg">
+      {/* 青い炎 */}
+      <path d="M60 20 Q40 50 44 70 Q46 94 60 100 Q74 94 76 70 Q80 50 60 20 Z" class="sym-fill" />
+      <path d="M60 52 Q52 68 55 80 Q57 92 60 94 Q63 92 65 80 Q68 68 60 52 Z" class="sym-bg-dot" />
+    </g>
+  )}
+
+  {id === 'glass' && (
+    <g class="sym-fg">
+      {/* ハンマーと、砕けたガラスの放射状の亀裂 */}
+      <circle cx="60" cy="62" r="34" class="sym-line" opacity="0.4" />
+      <path
+        d="M60 62 L34 40 M60 62 L92 46 M60 62 L36 88 M60 62 L84 94 M60 62 L60 26 M60 62 L26 66"
+        class="sym-line"
+        stroke-width="3"
+      />
+      <rect x="52" y="52" width="20" height="20" rx="3" class="sym-fill" transform="rotate(20 62 62)" />
+      <path d="M74 74 L96 100" class="sym-accent-line" stroke-width="6" />
+    </g>
+  )}
+
+  {id === 'kitsunebi' && (
+    <g class="sym-fg">
+      {/* 家屋の影と、宙に浮く狐火 */}
+      <path d="M20 66 L60 40 L100 66 L100 98 L20 98 Z" class="sym-fill" opacity="0.85" />
+      <path d="M14 68 L60 37 L106 68" class="sym-line" />
+      <circle cx="34" cy="34" r="7" class="sym-accent" />
+      <circle cx="52" cy="22" r="5" class="sym-accent" opacity="0.7" />
+      <circle cx="86" cy="30" r="6" class="sym-accent" opacity="0.85" />
+      <rect x="52" y="76" width="16" height="22" class="sym-bg-dot" />
+    </g>
+  )}
+
+  {id === 'shinsekai' && (
+    <g class="sym-fg">
+      {/* 注連縄の輪の内側に、呪力で浮くもの */}
+      <circle cx="60" cy="60" r="38" class="sym-line" stroke-width="7" />
+      <path d="M28 40 L36 32 M44 28 L50 20 M78 26 L84 18 M90 40 L98 34" class="sym-line" stroke-width="4" />
+      <circle cx="60" cy="66" r="12" class="sym-fill" />
+      <path d="M60 66 L60 42" class="sym-accent-line" stroke-width="3" />
+      <circle cx="60" cy="40" r="5" class="sym-accent" />
+    </g>
+  )}
+
+  {id === 'akunokyouten' && (
+    <g class="sym-fg">
+      {/* 校舎の窓。ひとつだけ赤い。上に鴉 */}
+      <rect x="22" y="46" width="76" height="56" rx="3" class="sym-fill" />
+      {[0, 1, 2, 3].map((i) =>
+        [0, 1, 2].map((j) => (
+          <rect
+            x={30 + i * 17}
+            y={54 + j * 17}
+            width="11"
+            height="11"
+            class={i === 2 && j === 1 ? 'sym-accent' : 'sym-bg-dot'}
+          />
+        ))
+      )}
+      <path d="M34 34 Q44 24 54 32 Q62 26 70 32 Q60 40 46 40 Z" class="sym-fill" />
+      <path d="M70 32 L84 28" class="sym-line" stroke-width="3" />
+    </g>
+  )}
+
+  {id === 'darkzone' && (
+    <g class="sym-fg">
+      {/* 将棋の駒と、島影 */}
+      <path d="M60 20 L82 34 L88 82 L32 82 L38 34 Z" class="sym-fill" />
+      <path d="M60 38 L60 72 M48 54 H72" class="sym-line-bg" stroke-width="4" />
+      <path d="M14 100 Q34 84 52 96 Q72 82 92 96 Q102 92 108 100 Z" class="sym-accent" opacity="0.85" />
+    </g>
+  )}
+
+  {id === 'kagi' && (
+    <g class="sym-fg">
+      {/* 鍵のかかった扉 */}
+      <rect x="30" y="18" width="60" height="86" rx="4" class="sym-fill" />
+      <circle cx="60" cy="56" r="12" class="sym-bg-dot" />
+      <path d="M60 62 L60 82 L68 82 M60 72 L67 72" class="sym-bg-line" stroke-width="5" />
+      <circle cx="60" cy="52" r="5" class="sym-accent" />
+    </g>
+  )}
+
+  {id === 'suzumebachi' && (
+    <g class="sym-fg">
+      {/* 雀蜂と、降り続ける雪 */}
+      <ellipse cx="60" cy="66" rx="15" ry="24" class="sym-fill" />
+      <path d="M46 56 H74 M46 68 H74 M49 80 H71" class="sym-bg-line" stroke-width="5" />
+      <ellipse cx="36" cy="50" rx="16" ry="8" class="sym-line" transform="rotate(-25 36 50)" />
+      <ellipse cx="84" cy="50" rx="16" ry="8" class="sym-line" transform="rotate(25 84 50)" />
+      <path d="M60 90 L60 100" class="sym-accent-line" stroke-width="4" />
+      <circle cx="24" cy="24" r="3" class="sym-line-fill" />
+      <circle cx="96" cy="30" r="3" class="sym-line-fill" />
+      <circle cx="30" cy="96" r="3" class="sym-line-fill" />
+      <circle cx="98" cy="90" r="3" class="sym-line-fill" />
+    </g>
+  )}
+
+  {id === 'mysteryclock' && (
+    <g class="sym-fg">
+      {/* 針の読めない時計 */}
+      <circle cx="60" cy="60" r="38" class="sym-fill" />
+      <circle cx="60" cy="60" r="30" class="sym-bg-dot" />
+      <path d="M60 60 L60 36 M60 60 L78 70" class="sym-line" stroke-width="4" />
+      <circle cx="60" cy="60" r="4" class="sym-accent" />
+      <path d="M60 18 L60 24 M102 60 L96 60 M60 102 L60 96 M18 60 L24 60" class="sym-line" stroke-width="4" />
+    </g>
+  )}
+
+  {id === 'zainin' && (
+    <g class="sym-fg">
+      {/* どちらかに毒。一升瓶と缶詰 */}
+      <path d="M40 44 L40 32 L48 32 L48 44 Q54 50 54 60 L54 98 L34 98 L34 60 Q34 50 40 44 Z" class="sym-fill" />
+      <rect x="66" y="58" width="26" height="40" rx="3" class="sym-fill" />
+      <ellipse cx="79" cy="58" rx="13" ry="5" class="sym-line-fill" />
+      <path d="M34 74 H54" class="sym-bg-line" stroke-width="5" />
+      <circle cx="79" cy="78" r="7" class="sym-accent" />
+    </g>
+  )}
+
+  {id === 'wareware' && (
+    <g class="sym-fg">
+      {/* 輪廻の円と、重なる二つの生 */}
+      <circle cx="60" cy="60" r="38" class="sym-line" stroke-width="5" opacity="0.5" />
+      <path d="M60 22 A38 38 0 0 1 60 98 A19 19 0 0 1 60 60 A19 19 0 0 0 60 22 Z" class="sym-fill" />
+      <circle cx="60" cy="41" r="5" class="sym-bg-dot" />
+      <circle cx="60" cy="79" r="5" class="sym-accent" />
+    </g>
+  )}
+
+  {id === 'akisame' && (
+    <g class="sym-fg">
+      {/* 秋の雨と、垂れた稲穂 */}
+      <path d="M28 22 L20 48 M46 18 L38 44 M64 22 L56 48 M82 18 L74 44 M100 22 L92 48" class="sym-line" stroke-width="4" />
+      <path d="M40 100 Q42 72 56 62" class="sym-fill-line" />
+      <path d="M64 100 Q66 70 82 60" class="sym-fill-line" />
+      <ellipse cx="56" cy="60" rx="9" ry="5" class="sym-accent" transform="rotate(-35 56 60)" />
+      <ellipse cx="82" cy="58" rx="9" ry="5" class="sym-accent" transform="rotate(-35 82 58)" />
+    </g>
+  )}
+
+  {id === 'tsuyu' && (
+    <g class="sym-fg">
+      {/* 梅雨と、生えてくる茸 */}
+      <path d="M26 20 L20 42 M48 16 L42 38 M72 20 L66 42 M96 16 L90 38" class="sym-line" stroke-width="4" />
+      <path d="M32 76 Q32 58 50 58 Q68 58 68 76 Z" class="sym-fill" />
+      <rect x="44" y="76" width="12" height="24" rx="4" class="sym-line-fill" />
+      <path d="M68 92 Q68 80 80 80 Q92 80 92 92 Z" class="sym-accent" />
+      <rect x="76" y="92" width="8" height="12" rx="3" class="sym-line-fill" />
+    </g>
+  )}
+
+  {id === 'usagi' && (
+    <g class="sym-fg">
+      {/* 兎と、割れかけた薄氷 */}
+      <ellipse cx="60" cy="56" rx="20" ry="18" class="sym-fill" />
+      <ellipse cx="50" cy="28" rx="6" ry="16" class="sym-fill" transform="rotate(-12 50 28)" />
+      <ellipse cx="70" cy="28" rx="6" ry="16" class="sym-fill" transform="rotate(12 70 28)" />
+      <circle cx="53" cy="54" r="3" class="sym-bg-dot" />
+      <circle cx="68" cy="54" r="3" class="sym-bg-dot" />
+      <path d="M12 84 H108" class="sym-line" stroke-width="4" />
+      <path d="M30 84 L38 104 M56 84 L50 104 M56 84 L70 100 M84 84 L92 102" class="sym-accent-line" stroke-width="3" />
+    </g>
+  )}
+
+  {id === 'sakasaboshi' && (
+    <g class="sym-fg">
+      {/* 逆さの五芒星 */}
+      <circle cx="60" cy="60" r="38" class="sym-line" stroke-width="4" opacity="0.55" />
+      <path d="M60 96 L24 44 L96 44 Z M60 96 L88 30 L32 30 Z" class="sym-star" />
+    </g>
+  )}
+
+  {(id === 'iyanakioku' || ![
+    'isola','kuroiie','tenshi','crimson','aonohonoo','glass','kitsunebi','shinsekai','akunokyouten',
+    'darkzone','kagi','suzumebachi','mysteryclock','zainin','wareware','akisame','tsuyu','usagi','sakasaboshi'
+  ].includes(id)) && (
+    <g class="sym-fg">
+      {/* 未定義の作品は本の背表紙で表す */}
+      <rect x="38" y="20" width="44" height="80" rx="3" class="sym-fill" />
+      <path d="M46 34 H74 M46 46 H74 M46 58 H66" class="sym-bg-line" stroke-width="4" />
+      <path d="M38 88 H82" class="sym-accent-line" stroke-width="5" />
+    </g>
+  )}
+</svg>
+
+<style>
+  .work-symbol { display: block; }
+  .sym-bg { fill: color-mix(in srgb, var(--sym) 12%, var(--surface)); }
+  .sym-fill { fill: var(--sym); }
+  .sym-line { fill: none; stroke: var(--sym); stroke-width: 5; stroke-linecap: round; }
+  .sym-fill-line { fill: none; stroke: var(--sym); stroke-width: 6; stroke-linecap: round; }
+  .sym-line-fill { fill: var(--sym); opacity: 0.75; }
+  .sym-line-bg { fill: none; stroke: color-mix(in srgb, var(--sym) 12%, var(--surface)); stroke-linecap: round; }
+  .sym-bg-line { fill: none; stroke: color-mix(in srgb, var(--sym) 12%, var(--surface)); stroke-linecap: round; }
+  .sym-bg-dot { fill: color-mix(in srgb, var(--sym) 12%, var(--surface)); }
+  .sym-accent { fill: var(--accent); }
+  .sym-accent-line { fill: none; stroke: var(--accent); stroke-linecap: round; }
+  .sym-star {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 5;
+    stroke-linejoin: round;
+  }
+</style>

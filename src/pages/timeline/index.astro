@@ -1,0 +1,139 @@
+---
+import Base from '../../layouts/Base.astro';
+import timelineData from '../../data/timeline.json';
+import worksData from '../../data/works.json';
+
+const base = import.meta.env.BASE_URL;
+const { entries, kinds } = timelineData;
+const workById = Object.fromEntries(worksData.works.map((w) => [w.id, w]));
+
+const sorted = [...entries].sort((a, b) => {
+  const ad = a.date ?? `${a.year}-00`;
+  const bd = b.date ?? `${b.year}-00`;
+  return ad.localeCompare(bd);
+});
+
+// 年ごとにまとめる
+const byYear: { year: number; items: typeof sorted }[] = [];
+sorted.forEach((e) => {
+  const last = byYear[byYear.length - 1];
+  if (last && last.year === e.year) last.items.push(e);
+  else byYear.push({ year: e.year, items: [e] });
+});
+---
+
+<Base title="年譜" description="貴志祐介の経歴・刊行・受賞・映像化を一本の時間軸にまとめた年譜。">
+  <h1>年譜</h1>
+  <p class="muted">
+    生い立ちから最新作までを、経歴・刊行・受賞・映像化の4種類に色分けして並べました。
+    日本語版Wikipedia「貴志祐介」および各版元の商品ページで確認した情報に基づいています。
+  </p>
+
+  <div class="chips filters" id="kind-chips">
+    <button class="filter-chip active" data-kind="">すべて</button>
+    {Object.entries(kinds).map(([k, v]) => (
+      <button class="filter-chip" data-kind={k}>
+        <span class="kind-dot" style={`background:${v.color}`}></span>{v.label}
+      </button>
+    ))}
+  </div>
+
+  <div class="tl">
+    {byYear.map((y) => (
+      <section class="tl-year" data-year={y.year}>
+        <h2 class="year-head">{y.year}</h2>
+        <ul class="tl-items">
+          {y.items.map((e) => (
+            <li class="tl-item" data-kind={e.kind}>
+              <span class="tl-dot" style={`background:${kinds[e.kind].color}`}></span>
+              <div class="tl-body card">
+                <div class="tl-meta">
+                  <span class="kind-badge" style={`background:${kinds[e.kind].color}`}>{kinds[e.kind].label}</span>
+                  {e.date && e.date.length > 4 && <span class="muted tl-date">{e.date.slice(5).replace('-', '/')}</span>}
+                </div>
+                <strong class="tl-title">{e.title}</strong>
+                {e.text && <p class="tl-text">{e.text}</p>}
+                {e.workId && workById[e.workId] && (
+                  <p class="tl-link"><a href={`${base}works/${e.workId}/`}>『{workById[e.workId].title}』のページ →</a></p>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </div>
+</Base>
+
+<script is:inline>
+  (() => {
+    const items = [...document.querySelectorAll('.tl-item')];
+    const years = [...document.querySelectorAll('.tl-year')];
+    document.getElementById('kind-chips').addEventListener('click', (e) => {
+      const b = e.target.closest('.filter-chip');
+      if (!b) return;
+      b.parentElement.querySelectorAll('.filter-chip').forEach((x) => x.classList.remove('active'));
+      b.classList.add('active');
+      const kind = b.dataset.kind;
+      items.forEach((i) => (i.hidden = !!kind && i.dataset.kind !== kind));
+      years.forEach((y) => {
+        const shown = [...y.querySelectorAll('.tl-item')].some((i) => !i.hidden);
+        y.hidden = !shown;
+      });
+    });
+  })();
+</script>
+
+<style>
+  h1 { margin-bottom: 0.3rem; }
+  .filters { margin: 16px 0 22px; }
+  .kind-dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    margin-right: 5px;
+  }
+
+  .tl-year { margin-bottom: 6px; }
+  .tl-year[hidden] { display: none; }
+  .year-head {
+    font-size: 1.4rem;
+    margin: 18px 0 8px;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+  }
+  .tl-items {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 20px;
+    border-left: 2px solid var(--line);
+  }
+  .tl-item {
+    position: relative;
+    padding: 0 0 12px 0;
+  }
+  .tl-item[hidden] { display: none; }
+  .tl-dot {
+    position: absolute;
+    left: -27px;
+    top: 16px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+  }
+  .tl-body { padding: 13px 16px; }
+  .tl-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+  .kind-badge {
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 0.1em 0.6em;
+    border-radius: 999px;
+  }
+  .tl-date { font-size: 0.76rem; }
+  .tl-title { font-size: 1rem; }
+  .tl-text { margin: 5px 0 0; font-size: 0.88rem; }
+  .tl-link { margin: 8px 0 0; font-size: 0.82rem; }
+</style>

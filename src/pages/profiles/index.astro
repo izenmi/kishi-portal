@@ -1,0 +1,113 @@
+---
+import Base from '../../layouts/Base.astro';
+import worksData from '../../data/works.json';
+import mediaData from '../../data/media.json';
+
+const base = import.meta.env.BASE_URL;
+const { works, genres, seriesDefs, axisLabels } = worksData;
+
+const mediaCount = works.reduce<Record<string, number>>((acc, w) => {
+  acc[w.id] = mediaData.items.filter((m) => m.workId === w.id).length;
+  return acc;
+}, {});
+
+const rows = [...works].sort((a, b) => a.ym.localeCompare(b.ym));
+---
+
+<Base title="全作品データ表" description="貴志祐介の全小説を刊行年・ジャンル・形式・受賞・映像化の有無で一覧できる表。列見出しをクリックすると並べ替えできます。">
+  <h1>全作品データ表</h1>
+  <p class="muted">
+    列見出しをクリックすると並べ替わります。恐怖度と知的興奮は管理人の主観による0〜100の目安で、
+    <a href={`${base}map/`}>作風マップ</a>と同じ数値です。
+  </p>
+
+  <div class="scroll-x">
+    <table class="data" id="tbl">
+      <thead>
+        <tr>
+          <th class="sortable" data-key="ym">刊行</th>
+          <th class="sortable" data-key="title">作品</th>
+          <th class="sortable" data-key="genre">ジャンル</th>
+          <th class="sortable" data-key="form">形式</th>
+          <th class="sortable" data-key="series">シリーズ</th>
+          <th class="sortable num" data-key="fear">{axisLabels.fear}</th>
+          <th class="sortable num" data-key="brain">{axisLabels.brain}</th>
+          <th class="sortable num" data-key="awards">受賞</th>
+          <th class="sortable num" data-key="media">映像化等</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((w) => (
+          <tr
+            data-ym={w.ym}
+            data-title={w.kana}
+            data-genre={genres[w.genre]}
+            data-form={w.form}
+            data-series={w.series ? seriesDefs[w.series] : 'ノンシリーズ'}
+            data-fear={w.axes?.fear ?? -1}
+            data-brain={w.axes?.brain ?? -1}
+            data-awards={w.awards.length}
+            data-media={mediaCount[w.id]}
+          >
+            <td class="nowrap">{w.year}年{Number(w.ym.slice(5))}月</td>
+            <td><a href={`${base}works/${w.id}/`}>{w.title}</a></td>
+            <td><span class="genre" data-genre={w.genre}>{genres[w.genre]}</span></td>
+            <td class="nowrap">{w.form}</td>
+            <td class="nowrap">{w.series ? seriesDefs[w.series] : <span class="muted">—</span>}</td>
+            <td class="num">{w.axes ? w.axes.fear : <span class="muted">—</span>}</td>
+            <td class="num">{w.axes ? w.axes.brain : <span class="muted">—</span>}</td>
+            <td class="num">{w.awards.length > 0 ? w.awards.length : <span class="muted">—</span>}</td>
+            <td class="num">{mediaCount[w.id] > 0 ? mediaCount[w.id] : <span class="muted">—</span>}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="section-title">数え方について</h2>
+  <ul class="muted notes">
+    <li>「受賞」の列は works.json に記録した受賞・候補・ランキング入りの件数です。受賞のみの内訳は<a href={`${base}awards/`}>受賞・ランキング</a>にあります。</li>
+    <li>「映像化等」は映画・ドラマ・配信ドラマ・アニメ・漫画の合計本数です。内訳は<a href={`${base}media/`}>映像化・漫画化</a>にあります。</li>
+    <li>共著の『最恐ホラー 嫌な記憶』は書誌のみの掲載のため、主観指標の欄は空にしています。</li>
+  </ul>
+</Base>
+
+<script is:inline>
+  (() => {
+    const tbl = document.getElementById('tbl');
+    const tbody = tbl.querySelector('tbody');
+    const NUM = new Set(['fear', 'brain', 'awards', 'media']);
+    let cur = { key: 'ym', dir: 1 };
+
+    tbl.querySelectorAll('th.sortable').forEach((th) => {
+      th.addEventListener('click', () => {
+        const key = th.dataset.key;
+        cur = { key, dir: cur.key === key ? -cur.dir : 1 };
+        tbl.querySelectorAll('th.sortable').forEach((x) => (x.dataset.dir = ''));
+        th.dataset.dir = cur.dir > 0 ? 'asc' : 'desc';
+        const rows = [...tbody.querySelectorAll('tr')];
+        rows.sort((a, b) => {
+          const av = a.dataset[key];
+          const bv = b.dataset[key];
+          const r = NUM.has(key) ? Number(av) - Number(bv) : String(av).localeCompare(String(bv), 'ja');
+          return r * cur.dir;
+        });
+        rows.forEach((r) => tbody.appendChild(r));
+      });
+    });
+  })();
+</script>
+
+<style>
+  h1 { margin-bottom: 0.3rem; }
+  table.data { min-width: 780px; }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: var(--accent); }
+  th.sortable::after { content: " ⇅"; opacity: 0.35; font-size: 0.85em; }
+  th.sortable[data-dir="asc"]::after { content: " ↑"; opacity: 1; }
+  th.sortable[data-dir="desc"]::after { content: " ↓"; opacity: 1; }
+  td.num, th.num { text-align: right; }
+  td.nowrap { white-space: nowrap; }
+  .notes { font-size: 0.85rem; padding-left: 1.2em; }
+  .notes li { margin-bottom: 6px; }
+</style>

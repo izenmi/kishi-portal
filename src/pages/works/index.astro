@@ -1,0 +1,178 @@
+---
+import Base from '../../layouts/Base.astro';
+import WorkSymbol from '../../components/WorkSymbol.astro';
+import worksData from '../../data/works.json';
+
+const base = import.meta.env.BASE_URL;
+const { works, genres, seriesDefs } = worksData;
+const sorted = [...works].sort((a, b) => a.ym.localeCompare(b.ym));
+---
+
+<Base title="作品一覧" description="貴志祐介の小説(長編・短編集)全作品の一覧。刊行順・ジャンル・シリーズで絞り込めます。">
+  <h1>作品一覧</h1>
+  <p class="muted">
+    長編と短編集を刊行順に並べています(全{works.length}作)。エッセイ集『極悪鳥になる夢を見る』とビジネス書『エンタテインメントの作り方』は小説ではないため収録していません。
+    カードの<strong>「読了にする」</strong>を押すと、その作品のネタバレがサイト全体で解禁されます。
+  </p>
+
+  <div class="filters card">
+    <div class="filter-row">
+      <span class="filter-label">ジャンル</span>
+      <div class="chips" id="genre-chips">
+        <button class="filter-chip active" data-genre="">すべて</button>
+        {Object.entries(genres).map(([k, v]) => <button class="filter-chip" data-genre={k}>{v}</button>)}
+      </div>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">シリーズ</span>
+      <div class="chips" id="series-chips">
+        <button class="filter-chip active" data-series="">すべて</button>
+        {Object.entries(seriesDefs).map(([k, v]) => <button class="filter-chip" data-series={k}>{v}</button>)}
+        <button class="filter-chip" data-series="none">ノンシリーズ</button>
+      </div>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">並び順</span>
+      <div class="chips" id="sort-chips">
+        <button class="filter-chip active" data-sort="old">刊行が古い順</button>
+        <button class="filter-chip" data-sort="new">刊行が新しい順</button>
+        <button class="filter-chip" data-sort="kana">五十音順</button>
+      </div>
+    </div>
+    <p class="muted count-line" id="count-line"></p>
+  </div>
+
+  <div class="work-list" id="work-list">
+    {sorted.map((w) => (
+      <article
+        class="work-card card"
+        data-id={w.id}
+        data-genre={w.genre}
+        data-series={w.series ?? 'none'}
+        data-ym={w.ym}
+        data-kana={w.kana}
+      >
+        <a class="work-sym" href={`${base}works/${w.id}/`} aria-label={`${w.title} の詳細`}>
+          <WorkSymbol id={w.id} genre={w.genre} size={104} title={w.title} />
+        </a>
+        <div class="work-body">
+          <div class="work-meta">
+            <span class="genre" data-genre={w.genre}>{genres[w.genre]}</span>
+            {w.series && <span class="series-chip" data-series={w.series}>{seriesDefs[w.series]}</span>}
+            <span class="muted work-pub">{w.year}年 / {w.publisher} / {w.form}</span>
+          </div>
+          <h2 class="work-title"><a href={`${base}works/${w.id}/`}>{w.title}</a></h2>
+          <p class="work-logline">{w.logline}</p>
+          {w.awards.length > 0 && (
+            <p class="work-awards">🏆 {w.awards.join(' / ')}</p>
+          )}
+          {!w.partial && (
+            <button class="read-toggle" type="button" data-work={w.id} aria-pressed="false">
+              <span class="read-toggle-label">読了にする</span>
+            </button>
+          )}
+        </div>
+      </article>
+    ))}
+  </div>
+
+  <p class="muted note-bottom">
+    表示されているあらすじは、ネタバレを含まない範囲でまとめたものです。各作品ページの「ネタバレ込みの解説」は、その作品を読了にするまで伏せられます。
+  </p>
+</Base>
+
+<script is:inline>
+  (() => {
+    const list = document.getElementById('work-list');
+    const cards = [...list.querySelectorAll('.work-card')];
+    const state = { genre: '', series: '', sort: 'old' };
+
+    const bind = (id, key) => {
+      document.getElementById(id).addEventListener('click', (e) => {
+        const b = e.target.closest('.filter-chip');
+        if (!b) return;
+        b.parentElement.querySelectorAll('.filter-chip').forEach((x) => x.classList.remove('active'));
+        b.classList.add('active');
+        state[key] = b.dataset[key];
+        render();
+      });
+    };
+
+    const render = () => {
+      let shown = 0;
+      cards.forEach((c) => {
+        const ok =
+          (!state.genre || c.dataset.genre === state.genre) &&
+          (!state.series || c.dataset.series === state.series);
+        c.hidden = !ok;
+        if (ok) shown++;
+      });
+      const visible = cards.filter((c) => !c.hidden);
+      visible.sort((a, b) => {
+        if (state.sort === 'kana') return a.dataset.kana.localeCompare(b.dataset.kana, 'ja');
+        if (state.sort === 'new') return b.dataset.ym.localeCompare(a.dataset.ym);
+        return a.dataset.ym.localeCompare(b.dataset.ym);
+      });
+      visible.forEach((c) => list.appendChild(c));
+      document.getElementById('count-line').textContent = `${shown} 作を表示中`;
+    };
+
+    bind('genre-chips', 'genre');
+    bind('series-chips', 'series');
+    bind('sort-chips', 'sort');
+    render();
+  })();
+</script>
+
+<style>
+  h1 { margin-bottom: 0.3rem; }
+  .filters { padding: 14px 16px; margin: 18px 0; }
+  .filter-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 5px 0;
+  }
+  .filter-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--ink-2);
+    min-width: 4.2em;
+  }
+  .count-line { margin: 8px 0 0; font-size: 0.82rem; }
+
+  .work-list { display: grid; gap: 14px; }
+  .work-card {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    align-items: flex-start;
+  }
+  .work-card[hidden] { display: none; }
+  .work-sym { flex: none; line-height: 0; }
+  .work-body { min-width: 0; flex: 1; }
+  .work-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 4px;
+  }
+  .work-pub { font-size: 0.78rem; }
+  .work-title { font-size: 1.2rem; margin: 2px 0 6px; }
+  .work-title a { text-decoration: none; }
+  .work-title a:hover { color: var(--accent); }
+  .work-logline { margin: 0 0 8px; font-size: 0.94rem; }
+  .work-awards {
+    margin: 0 0 10px;
+    font-size: 0.8rem;
+    color: var(--ink-2);
+  }
+  .note-bottom { font-size: 0.82rem; margin-top: 24px; }
+
+  @media (max-width: 560px) {
+    .work-card { flex-direction: column; }
+    .work-sym { align-self: flex-start; }
+  }
+</style>

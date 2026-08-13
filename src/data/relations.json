@@ -1,0 +1,183 @@
+{
+  "note": "作品ごとの人物相関図。座標は viewBox 1000x560 上の固定値。未読の作品の図はまるごと表示されない。nodes の name はキャラクター名鑑に個別項目を立てていない人物を図の中だけで示すための表記。",
+  "types": {
+    "family": { "label": "家族・血縁", "color": "#8a5cc4", "dash": "", "width": 3.4 },
+    "work": { "label": "職務・同僚", "color": "#2f6f8f", "dash": "", "width": 2.4 },
+    "client": { "label": "依頼・弁護", "color": "#4c5aa8", "dash": "6 4", "width": 2.4 },
+    "friend": { "label": "友情・仲間", "color": "#2c8168", "dash": "", "width": 2.4 },
+    "love": { "label": "恋愛・想い", "color": "#d9548a", "dash": "", "width": 2.6 },
+    "suspect": { "label": "追及・容疑", "color": "#a4642a", "dash": "8 5", "width": 2.4 },
+    "kill": { "label": "殺害・加害", "color": "#9c2b2b", "dash": "", "width": 3.2 }
+  },
+  "graphs": [
+    {
+      "work": "kuroiie",
+      "label": "黒い家",
+      "caption": "査定担当者と一軒の家。矢印の向きが途中で入れ替わるのがこの作品の構造そのものになっている。",
+      "nodes": [
+        { "id": "kasai", "x": 110, "y": 110 },
+        { "id": "wakatsuki", "x": 330, "y": 130 },
+        { "id": "megumi", "x": 150, "y": 330, "name": "恵(若槻の恋人)" },
+        { "id": "kanaishi", "x": 350, "y": 430 },
+        { "id": "misumi", "x": 600, "y": 430 },
+        { "id": "shigenori", "x": 720, "y": 120 },
+        { "id": "sachiko", "x": 860, "y": 300 },
+        { "id": "child", "x": 640, "y": 250, "name": "菰田家の子ども" }
+      ],
+      "edges": [
+        { "from": "kasai", "to": "wakatsuki", "type": "work", "label": "上司" },
+        { "from": "wakatsuki", "to": "megumi", "type": "love", "label": "恋人" },
+        { "from": "wakatsuki", "to": "kanaishi", "type": "work", "label": "プロファイル依頼" },
+        { "from": "wakatsuki", "to": "misumi", "type": "work", "label": "潰し屋を派遣" },
+        { "from": "wakatsuki", "to": "shigenori", "type": "suspect", "label": "保険金請求と査定" },
+        { "from": "shigenori", "to": "sachiko", "type": "family", "label": "夫婦" },
+        { "from": "sachiko", "to": "child", "type": "family", "label": "連れ子" },
+        { "from": "sachiko", "to": "kanaishi", "type": "kill", "label": "惨殺" },
+        { "from": "sachiko", "to": "misumi", "type": "kill", "label": "殺害" },
+        { "from": "sachiko", "to": "shigenori", "type": "kill", "label": "両腕の切断" },
+        { "from": "sachiko", "to": "megumi", "type": "kill", "label": "拉致監禁" },
+        { "from": "sachiko", "to": "wakatsuki", "type": "kill", "label": "職場を襲撃" }
+      ]
+    },
+    {
+      "work": "aonohonoo",
+      "label": "青の炎",
+      "caption": "守るための犯罪が、守ろうとした関係をどう変えていくか。",
+      "nodes": [
+        { "id": "haha", "x": 320, "y": 110, "name": "秀一の母" },
+        { "id": "imouto", "x": 620, "y": 110, "name": "秀一の妹" },
+        { "id": "shuichi", "x": 470, "y": 280 },
+        { "id": "sone", "x": 810, "y": 250 },
+        { "id": "noriko", "x": 180, "y": 380 },
+        { "id": "law", "x": 620, "y": 460, "name": "法・大人の社会" }
+      ],
+      "edges": [
+        { "from": "shuichi", "to": "haha", "type": "family", "label": "母子" },
+        { "from": "shuichi", "to": "imouto", "type": "family", "label": "兄妹" },
+        { "from": "sone", "to": "haha", "type": "family", "label": "10年前に離婚した元夫" },
+        { "from": "sone", "to": "imouto", "type": "suspect", "label": "魔の手を伸ばす" },
+        { "from": "shuichi", "to": "noriko", "type": "love", "label": "心を通わせる" },
+        { "from": "shuichi", "to": "law", "type": "client", "label": "法的手段に訴える" },
+        { "from": "law", "to": "sone", "type": "suspect", "label": "排除できない" },
+        { "from": "shuichi", "to": "sone", "type": "kill", "label": "完全犯罪の計画" }
+      ]
+    },
+    {
+      "work": "shinsekai",
+      "label": "新世界より",
+      "caption": "全人学級一班の五人と、彼らを取り巻く町とバケネズミ。",
+      "nodes": [
+        { "id": "tomiko", "x": 140, "y": 110 },
+        { "id": "shisei", "x": 400, "y": 90 },
+        { "id": "saki", "x": 300, "y": 280 },
+        { "id": "satoru", "x": 540, "y": 280 },
+        { "id": "shun", "x": 420, "y": 440 },
+        { "id": "maria", "x": 130, "y": 420 },
+        { "id": "mamoru", "x": 250, "y": 520 },
+        { "id": "squealer", "x": 820, "y": 160 },
+        { "id": "kiroumaru", "x": 870, "y": 400 },
+        { "id": "messiah", "x": 640, "y": 500, "name": "「悪鬼」の子" }
+      ],
+      "edges": [
+        { "from": "saki", "to": "satoru", "type": "friend", "label": "幼馴染 → 伴侶" },
+        { "from": "saki", "to": "shun", "type": "love", "label": "想いを寄せる" },
+        { "from": "satoru", "to": "shun", "type": "love", "label": "14歳のとき恋人" },
+        { "from": "saki", "to": "maria", "type": "love", "label": "14歳のとき恋人" },
+        { "from": "mamoru", "to": "maria", "type": "love", "label": "長い片思いが実る" },
+        { "from": "tomiko", "to": "saki", "type": "work", "label": "後継者として便宜を図る" },
+        { "from": "tomiko", "to": "satoru", "type": "family", "label": "9代前の先祖" },
+        { "from": "shisei", "to": "tomiko", "type": "work", "label": "町の安全保障" },
+        { "from": "squealer", "to": "saki", "type": "work", "label": "利用する" },
+        { "from": "squealer", "to": "kiroumaru", "type": "suspect", "label": "コロニー間の対立" },
+        { "from": "maria", "to": "messiah", "type": "family", "label": "母" },
+        { "from": "mamoru", "to": "messiah", "type": "family", "label": "父" },
+        { "from": "squealer", "to": "messiah", "type": "work", "label": "生物兵器として養育" },
+        { "from": "messiah", "to": "shisei", "type": "kill", "label": "呪力で殺害" },
+        { "from": "messiah", "to": "kiroumaru", "type": "kill", "label": "殺害 → 愧死機構の発動" }
+      ]
+    },
+    {
+      "work": "akunokyouten",
+      "label": "悪の教典",
+      "caption": "中心に立つ一人から、すべての線が同じ向きに出ている。",
+      "nodes": [
+        { "id": "sanada", "x": 140, "y": 120 },
+        { "id": "tsurii", "x": 420, "y": 90 },
+        { "id": "hasumi", "x": 500, "y": 280 },
+        { "id": "keisuke", "x": 800, "y": 140 },
+        { "id": "reika", "x": 230, "y": 400 },
+        { "id": "yuichiro", "x": 480, "y": 500 },
+        { "id": "kumi", "x": 820, "y": 400, "name": "久米(美術教師)" },
+        { "id": "class4", "x": 700, "y": 520, "name": "2年4組の生徒40名" }
+      ],
+      "edges": [
+        { "from": "hasumi", "to": "class4", "type": "work", "label": "担任" },
+        { "from": "hasumi", "to": "sanada", "type": "suspect", "label": "濡れ衣を着せて免職に" },
+        { "from": "tsurii", "to": "hasumi", "type": "suspect", "label": "経歴を調べ上げる" },
+        { "from": "hasumi", "to": "tsurii", "type": "kill", "label": "自殺に見せかけて殺害" },
+        { "from": "tsurii", "to": "keisuke", "type": "work", "label": "秘密を漏らす" },
+        { "from": "keisuke", "to": "hasumi", "type": "suspect", "label": "盗聴器に気づく" },
+        { "from": "hasumi", "to": "keisuke", "type": "kill", "label": "殺害" },
+        { "from": "reika", "to": "hasumi", "type": "suspect", "label": "直感で本性を見抜く" },
+        { "from": "keisuke", "to": "reika", "type": "love", "label": "想いを寄せる" },
+        { "from": "yuichiro", "to": "reika", "type": "love", "label": "想いを寄せる" },
+        { "from": "hasumi", "to": "kumi", "type": "suspect", "label": "弱味を握って食い物にする" },
+        { "from": "hasumi", "to": "class4", "type": "kill", "label": "文化祭前夜、散弾銃で射殺" },
+        { "from": "yuichiro", "to": "class4", "type": "friend", "label": "怜花と二人だけ生還" }
+      ]
+    },
+    {
+      "work": "glass",
+      "label": "防犯探偵・榎本シリーズ",
+      "caption": "この二人の関係だけがシリーズを貫いている。周囲は巻ごとに入れ替わる。",
+      "nodes": [
+        { "id": "enomoto", "x": 320, "y": 200 },
+        { "id": "junko", "x": 680, "y": 200 },
+        { "id": "rescue", "x": 900, "y": 90, "name": "レスキュー法律事務所" },
+        { "id": "shop", "x": 110, "y": 90, "name": "F&Fセキュリティ・ショップ" },
+        { "id": "police", "x": 500, "y": 60, "name": "警察" },
+        { "id": "nishino", "x": 500, "y": 420, "sp": "kitsunebi" },
+        { "id": "kusakabe", "x": 830, "y": 420, "sp": "kagi" },
+        { "id": "doskkotsu", "x": 180, "y": 420, "name": "劇団「土性骨」", "sp": "kitsunebi" }
+      ],
+      "edges": [
+        { "from": "enomoto", "to": "junko", "type": "work", "label": "密室の解明を託す/託される" },
+        { "from": "junko", "to": "enomoto", "type": "suspect", "label": "泥棒ではないかと疑い続ける" },
+        { "from": "enomoto", "to": "shop", "type": "work", "label": "店長" },
+        { "from": "junko", "to": "rescue", "type": "work", "label": "所属" },
+        { "from": "enomoto", "to": "police", "type": "work", "label": "人脈がある" },
+        { "from": "junko", "to": "police", "type": "suspect", "label": "接見妨害に苛立つ" },
+        { "from": "junko", "to": "nishino", "type": "client", "label": "弁護", "sp": "kitsunebi" },
+        { "from": "kusakabe", "to": "junko", "type": "client", "label": "調査を依頼", "sp": "kagi" },
+        { "from": "enomoto", "to": "doskkotsu", "type": "friend", "label": "たびたび事件に居合わせる", "sp": "kitsunebi" }
+      ]
+    },
+    {
+      "work": "crimson",
+      "label": "クリムゾンの迷宮",
+      "caption": "参加者だと思っていた七人のうち、二人は最初から向こう側にいる。",
+      "nodes": [
+        { "id": "fujiki", "x": 300, "y": 150 },
+        { "id": "ai", "x": 620, "y": 130 },
+        { "id": "norota", "x": 850, "y": 260 },
+        { "id": "host", "x": 550, "y": 40, "name": "ゲームの主催者" },
+        { "id": "narumoto", "x": 250, "y": 430, "name": "楢本真樹" },
+        { "id": "tsurumi", "x": 480, "y": 480, "name": "鶴見克也" },
+        { "id": "senoo", "x": 720, "y": 470, "name": "妹尾純一" },
+        { "id": "funaoka", "x": 90, "y": 300, "name": "船岡茂" }
+      ],
+      "edges": [
+        { "from": "fujiki", "to": "ai", "type": "friend", "label": "行動をともにする" },
+        { "from": "ai", "to": "host", "type": "work", "label": "カメラマン" },
+        { "from": "norota", "to": "host", "type": "work", "label": "ゲームマスター" },
+        { "from": "senoo", "to": "funaoka", "type": "suspect", "label": "食糧をめぐって殴り倒す" },
+        { "from": "narumoto", "to": "tsurumi", "type": "friend", "label": "徒党を組む" },
+        { "from": "narumoto", "to": "senoo", "type": "kill", "label": "殺害" },
+        { "from": "narumoto", "to": "funaoka", "type": "kill", "label": "食糧にする" },
+        { "from": "fujiki", "to": "tsurumi", "type": "kill", "label": "ボウトラップで仕留める" },
+        { "from": "fujiki", "to": "narumoto", "type": "kill", "label": "タイパンの谷へ誘い込む" },
+        { "from": "host", "to": "norota", "type": "kill", "label": "射殺" }
+      ]
+    }
+  ]
+}

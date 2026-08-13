@@ -1,0 +1,16 @@
+{
+  "name": "貴志祐介ポータル - 深淵の書架",
+  "short_name": "貴志祐介ポータル",
+  "description": "小説家・貴志祐介の非公式ファンサイト。作品ガイド・作風マップ・読書ガイド診断・人物名鑑を、読んだ作品だけ解禁されるネタバレ制御つきで。",
+  "start_url": "/kishi-portal/",
+  "scope": "/kishi-portal/",
+  "display": "standalone",
+  "theme_color": "#1a1d24",
+  "background_color": "#f2f1ed",
+  "lang": "ja",
+  "icons": [
+    { "src": "/kishi-portal/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/kishi-portal/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/kishi-portal/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

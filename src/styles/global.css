@@ -1,0 +1,338 @@
+/* ===== 貴志祐介ポータル - 深淵の書架 デザイントークン ===== */
+:root {
+  /* 基調色: 霧のかかった紙と墨 */
+  --bg: #f2f1ed;
+  --surface: #fbfaf7;
+  --surface-2: #e7e5df;
+  --ink: #23262c;
+  --ink-2: #5f6672;
+  --line: #d5d2ca;
+  /* アクセント: 表紙の深紅 */
+  --accent: #9c2b2b;
+  --accent-ink: #ffffff;
+  --accent-soft: #f2e3e1;
+  /* ヘッダー等の墨藍黒 */
+  --noir: #1a1d24;
+  --noir-ink: #e8e6df;
+  /* サブアクセント: 青の炎の蒼 */
+  --blue: #2f6f8f;
+  /* ジャンルカラー */
+  --genre-horror: #8e2a2a;      /* ホラー */
+  --genre-mystery: #2f6f8f;     /* ミステリ */
+  --genre-sf: #4c5aa8;          /* SF */
+  --genre-suspense: #a4642a;    /* サスペンス・サバイバル */
+  --genre-other: #5d6b5a;       /* その他 */
+  /* シリーズカラー */
+  --series-enomoto: #2f6f8f;
+  --series-ame: #5d6b5a;
+  --series-none: #7b7468;
+  /* 判定バッジ(クイズ・診断) */
+  --rank-a: #9c2b2b;
+  --rank-b: #2f6f8f;
+  --rank-c: #4c5aa8;
+  --rank-d: #a4642a;
+  --rank-e: #7b7468;
+  /* ネタバレマスク */
+  --mask-bg: #b9b5ab;
+  --radius: 12px;
+  --shadow: 0 1px 3px rgb(20 22 26 / 0.10), 0 4px 14px rgb(20 22 26 / 0.06);
+}
+
+:root:not([data-theme="light"]) {
+  @media (prefers-color-scheme: dark) {
+    --bg: #14161a;
+    --surface: #1e2126;
+    --surface-2: #282c33;
+    --ink: #e4e2db;
+    --ink-2: #a0a5ae;
+    --line: #3a3f47;
+    --accent: #d2645f;
+    --accent-soft: #332323;
+    --noir: #101216;
+    --noir-ink: #e4e2db;
+    --blue: #6ea8c6;
+    --genre-horror: #d2645f;
+    --genre-mystery: #6ea8c6;
+    --genre-sf: #8b94d8;
+    --genre-suspense: #d09a5c;
+    --genre-other: #93a58f;
+    --series-enomoto: #6ea8c6;
+    --series-ame: #93a58f;
+    --rank-a: #d2645f;
+    --rank-b: #6ea8c6;
+    --rank-c: #8b94d8;
+    --rank-d: #d09a5c;
+    --mask-bg: #4a4f57;
+    --shadow: 0 1px 3px rgb(0 0 0 / 0.5);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "BIZ UDPMincho", "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, system-ui, serif;
+  line-height: 1.8;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+img, svg { max-width: 100%; height: auto; }
+
+.container {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ===== 共通コンポーネント ===== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.25rem;
+  margin: 2.2rem 0 1rem;
+}
+.section-title::before {
+  content: "";
+  width: 6px;
+  height: 1.35em;
+  border-radius: 3px;
+  background: var(--accent);
+}
+
+/* ジャンルバッジ */
+.genre {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.05em 0.6em;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.78em;
+  color: #fff;
+  letter-spacing: 0.02em;
+  background: var(--genre-other);
+  white-space: nowrap;
+}
+.genre[data-genre="horror"] { background: var(--genre-horror); }
+.genre[data-genre="mystery"] { background: var(--genre-mystery); }
+.genre[data-genre="sf"] { background: var(--genre-sf); }
+.genre[data-genre="suspense"] { background: var(--genre-suspense); }
+.genre[data-genre="other"] { background: var(--genre-other); }
+
+/* シリーズチップ */
+.series-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.1em 0.7em;
+  border-radius: 999px;
+  font-size: 0.78em;
+  font-weight: 700;
+  color: #fff;
+  background: var(--series-none);
+  white-space: nowrap;
+}
+.series-chip[data-series="enomoto"] { background: var(--series-enomoto); }
+.series-chip[data-series="ame"] { background: var(--series-ame); }
+
+/* 評価バッジ(クイズ・診断の結果表示) */
+.rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.2em;
+  padding: 0.05em 0.45em;
+  border-radius: 6px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--rank-e);
+}
+.rank[data-rank^="A"] { background: var(--rank-a); }
+.rank[data-rank^="B"] { background: var(--rank-b); }
+.rank[data-rank^="C"] { background: var(--rank-c); }
+.rank[data-rank^="D"] { background: var(--rank-d); }
+.rank[data-rank^="E"] { background: var(--rank-e); }
+
+/* 既読トグル(作品ページ・一覧のその場切替) */
+.read-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.read-toggle:hover { border-color: var(--accent); }
+.read-toggle[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+.read-toggle::before { content: "☐"; }
+.read-toggle[aria-pressed="true"]::before { content: "☑"; }
+
+/* コンテンツ警告(ネタバレ制御とは別系統。常時表示) */
+.cw {
+  border: 1px solid color-mix(in srgb, var(--genre-suspense) 45%, var(--line));
+  background: color-mix(in srgb, var(--genre-suspense) 9%, var(--surface));
+  border-radius: 9px;
+  padding: 9px 14px;
+  font-size: 0.83rem;
+  margin: 12px 0;
+}
+.cw strong { color: var(--genre-suspense); }
+
+/* 推定値マーク */
+.estimated {
+  font-size: 0.72em;
+  color: var(--ink-2);
+  vertical-align: super;
+}
+
+/* ===== ネタバレ制御 ===== */
+/* data-sp: その情報が明かされる作品のid(カンマ区切りで複数。全部既読なら解禁) */
+.sp-locked {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+.sp-locked > * {
+  filter: blur(9px);
+  pointer-events: none;
+  user-select: none;
+}
+.sp-locked::after {
+  content: "🔒 " attr(data-sp-label) "のネタバレ(タップで表示)";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--mask-bg) 58%, transparent);
+  cursor: pointer;
+  text-align: center;
+  padding: 4px;
+}
+/* 一覧アイテム丸ごと非表示用 */
+.sp-hidden { display: none !important; }
+
+.sp-note {
+  font-size: 0.82rem;
+  color: var(--ink-2);
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 6px 12px;
+  margin: 8px 0;
+}
+
+/* ===== フィルタチップ(クライアント生成要素からも使うためグローバル定義) ===== */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.filter-chip {
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+.filter-chip.active { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.filter-chip:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ===== クイズ・診断 共通UI ===== */
+.panel { padding: 20px; margin-top: 14px; }
+.choices { display: grid; gap: 8px; margin: 14px 0; }
+.choice-btn {
+  text-align: left;
+  padding: 11px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: inherit;
+}
+.choice-btn:hover:not(:disabled) { border-color: var(--accent); }
+.choice-btn.correct { border-color: #2c8168; background: color-mix(in srgb, #2c8168 16%, var(--surface-2)); }
+.choice-btn.wrong { border-color: #b5442f; background: color-mix(in srgb, #b5442f 14%, var(--surface-2)); }
+.progress-line { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 700; }
+.primary-btn {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+.end-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.share-btn {
+  display: inline-block;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 16px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.share-btn:hover { border-color: var(--accent); }
+
+/* ===== ユーティリティ ===== */
+.muted { color: var(--ink-2); }
+.grid {
+  display: grid;
+  gap: 14px;
+}
+@media (min-width: 640px) {
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* 横に溢れる表・図はそれ自身の中でスクロールさせる */
+.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+table.data {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.88rem;
+  background: var(--surface);
+}
+table.data th, table.data td {
+  border: 1px solid var(--line);
+  padding: 7px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+table.data th {
+  background: var(--surface-2);
+  white-space: nowrap;
+  font-size: 0.82rem;
+}

@@ -1,0 +1,158 @@
+---
+import Base from '../../layouts/Base.astro';
+import charactersData from '../../data/characters.json';
+import worksData from '../../data/works.json';
+
+const base = import.meta.env.BASE_URL;
+const { characters, sides } = charactersData;
+const byWork = Object.fromEntries(worksData.works.map((w) => [w.id, w]));
+
+// 作品の刊行順に人物をまとめる
+const groups = worksData.works
+  .map((w) => ({ work: w, members: characters.filter((c) => c.work === w.id) }))
+  .filter((g) => g.members.length > 0)
+  .sort((a, b) => a.work.ym.localeCompare(b.work.ym));
+---
+
+<Base title="人物名鑑" description="貴志祐介の作品に登場する人物を作品横断で一覧。まだ読んでいない作品の人物は自動で伏せられます。">
+  <h1>人物名鑑</h1>
+  <p class="muted">
+    作品をまたいで{characters.length}名を収録しています。
+    <strong>まだ読了にしていない作品の人物は表示されません</strong>(存在自体がネタバレになる人物がいるため)。
+    右上の📖から読んだ作品にチェックを入れてください。
+  </p>
+  <p class="muted note-small">
+    小説には公式のビジュアルがなく、映像化キャストを描くと実在の俳優の似顔絵になってしまうため、
+    このサイトでは人物の絵は掲載していません。配役が確認できたものは俳優名・声優名のみ記載しています。
+  </p>
+
+  <div class="filters card">
+    <div class="filter-row">
+      <span class="filter-label">立場</span>
+      <div class="chips" id="side-chips">
+        <button class="filter-chip active" data-side="">すべて</button>
+        {Object.entries(sides).map(([k, v]) => <button class="filter-chip" data-side={k}>{v.label}</button>)}
+      </div>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">検索</span>
+      <input type="search" id="q" placeholder="名前・役柄で絞り込む" class="search-input" />
+    </div>
+  </div>
+
+  <div data-sp-count>
+    <p class="sp-note"></p>
+  </div>
+
+  <div id="char-groups">
+    {groups.map((g) => (
+      <section class="char-group" data-sp={g.work.id} data-sp-hide data-work={g.work.id}>
+        <h2 class="section-title">
+          <a href={`${base}works/${g.work.id}/`}>{g.work.title}</a>
+          <span class="muted group-count">{g.members.length}名</span>
+        </h2>
+        <div class="grid grid-2">
+          {g.members.map((c) => (
+            <article class="char card" data-side={c.side} data-q={`${c.name} ${c.kana} ${c.role} ${c.affil}`}>
+              <div class="char-head">
+                <span class="side-chip" style={`background:${sides[c.side].color}`}>{sides[c.side].label}</span>
+                <h3><a href={`${base}characters/${c.id}/`}>{c.name}</a></h3>
+                <p class="muted char-kana">{c.kana}</p>
+              </div>
+              <p class="char-role">
+                {c.role}{c.affil && <span class="muted"> / {c.affil}</span>}
+              </p>
+              <p class="char-bio">{c.bio}</p>
+              {c.actor && <p class="muted char-actor">🎬 {c.actor}</p>}
+            </article>
+          ))}
+        </div>
+      </section>
+    ))}
+  </div>
+
+  <p class="muted" id="empty-note" hidden>
+    条件に合う人物がいません。フィルタを解除するか、読んだ作品を追加してください。
+  </p>
+</Base>
+
+<script is:inline>
+  (() => {
+    const chars = [...document.querySelectorAll('.char')];
+    const groups = [...document.querySelectorAll('.char-group')];
+    let side = '';
+    let q = '';
+
+    const render = () => {
+      chars.forEach((c) => {
+        const ok = (!side || c.dataset.side === side) && (!q || c.dataset.q.includes(q));
+        c.hidden = !ok;
+      });
+      let any = false;
+      groups.forEach((g) => {
+        const shown = [...g.querySelectorAll('.char')].some((c) => !c.hidden);
+        g.classList.toggle('group-empty', !shown);
+        if (shown && !g.classList.contains('sp-hidden')) any = true;
+      });
+      document.getElementById('empty-note').hidden = any;
+    };
+
+    document.getElementById('side-chips').addEventListener('click', (e) => {
+      const b = e.target.closest('.filter-chip');
+      if (!b) return;
+      b.parentElement.querySelectorAll('.filter-chip').forEach((x) => x.classList.remove('active'));
+      b.classList.add('active');
+      side = b.dataset.side;
+      render();
+    });
+    document.getElementById('q').addEventListener('input', (e) => {
+      q = e.target.value.trim();
+      render();
+    });
+    document.addEventListener('kishi:read', render);
+    window.addEventListener('DOMContentLoaded', render);
+  })();
+</script>
+
+<style>
+  h1 { margin-bottom: 0.3rem; }
+  .note-small { font-size: 0.82rem; }
+  .filters { padding: 14px 16px; margin: 18px 0; }
+  .filter-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 5px 0; }
+  .filter-label { font-size: 0.78rem; font-weight: 700; color: var(--ink-2); min-width: 3.4em; }
+  .search-input {
+    flex: 1;
+    min-width: 180px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.88rem;
+  }
+
+  .char-group.group-empty { display: none; }
+  .group-count { font-size: 0.76rem; font-weight: 400; margin-left: auto; }
+  .section-title a { text-decoration: none; }
+  .section-title a:hover { color: var(--accent); }
+
+  .char { padding: 15px 16px; }
+  .char[hidden] { display: none; }
+  .char-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .char h3 { margin: 0; font-size: 1.05rem; }
+  .char h3 a { text-decoration: none; }
+  .char h3 a:hover { color: var(--accent); }
+  .char-kana { font-size: 0.74rem; margin: 0; }
+  .side-chip {
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.1em 0.6em;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .char-role { font-size: 0.85rem; margin: 6px 0 4px; }
+  .char-bio { font-size: 0.88rem; margin: 0; }
+  .char-actor { font-size: 0.78rem; margin: 8px 0 0; }
+</style>

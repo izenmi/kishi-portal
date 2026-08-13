@@ -1,0 +1,199 @@
+---
+import Base from '../../layouts/Base.astro';
+import worksData from '../../data/works.json';
+
+const base = import.meta.env.BASE_URL;
+const { works, genres } = worksData;
+const plotted = works.filter((w) => w.axes);
+
+// viewBox 860x580。左と下に軸ラベル用の余白をとる
+const PAD = { l: 66, r: 30, t: 30, b: 58 };
+const W = 860;
+const H = 580;
+
+// 値の分布に合わせて軸の範囲を切り詰める(0〜100のままだと左下半分が丸ごと空白になる)
+const nice = (v: number, dir: 1 | -1) => (dir > 0 ? Math.ceil(v / 10) * 10 : Math.floor(v / 10) * 10);
+const dom = {
+  x: [nice(Math.min(...plotted.map((w) => w.axes.brain)) - 6, -1), nice(Math.max(...plotted.map((w) => w.axes.brain)) + 4, 1)],
+  y: [nice(Math.min(...plotted.map((w) => w.axes.fear)) - 8, -1), nice(Math.max(...plotted.map((w) => w.axes.fear)) + 4, 1)],
+};
+const px = (v: number) => PAD.l + ((v - dom.x[0]) / (dom.x[1] - dom.x[0])) * (W - PAD.l - PAD.r);
+const py = (v: number) => H - PAD.b - ((v - dom.y[0]) / (dom.y[1] - dom.y[0])) * (H - PAD.t - PAD.b);
+
+const ticksOf = ([lo, hi]: number[]) => {
+  const step = (hi - lo) / 4 >= 20 ? 20 : 10;
+  const out: number[] = [];
+  for (let v = lo; v <= hi + 0.001; v += step) out.push(Math.round(v));
+  return out;
+};
+const xTicks = ticksOf(dom.x);
+const yTicks = ticksOf(dom.y);
+
+// ラベルの重なりを避ける: 候補位置を順に試し、既に置いたラベルと当たらない場所に置く
+type Box = { x1: number; y1: number; x2: number; y2: number };
+const placed: Box[] = [];
+const hit = (a: Box, b: Box) => a.x1 < b.x2 && b.x1 < a.x2 && a.y1 < b.y2 && b.y1 < a.y2;
+
+const points = plotted
+  .map((w) => ({
+    ...w,
+    cx: px(w.axes.brain),
+    cy: py(w.axes.fear),
+    r: 9 + (w.axes.pace / 100) * 9,
+  }))
+  // 円が小さいものから置くと、大きい円のラベルが優先的に良い位置を取れる
+  .sort((a, b) => b.r - a.r);
+
+// 円そのものも障害物として登録しておく(ラベルが他の円に重ならないように)
+points.forEach((p) => placed.push({ x1: p.cx - p.r, y1: p.cy - p.r, x2: p.cx + p.r, y2: p.cy + p.r }));
+
+const laid = points.map((p) => {
+  const w = p.title.length * 12.2 + 6;
+  const h = 15;
+  const cands = [
+    { dx: 0, dy: -(p.r + 7), anchor: 'middle' },
+    { dx: 0, dy: p.r + 15, anchor: 'middle' },
+    { dx: p.r + 7, dy: 5, anchor: 'start' },
+    { dx: -(p.r + 7), dy: 5, anchor: 'end' },
+    { dx: p.r + 7, dy: -(p.r + 2), anchor: 'start' },
+    { dx: -(p.r + 7), dy: -(p.r + 2), anchor: 'end' },
+    { dx: p.r + 7, dy: p.r + 12, anchor: 'start' },
+    { dx: -(p.r + 7), dy: p.r + 12, anchor: 'end' },
+    { dx: 0, dy: -(p.r + 24), anchor: 'middle' },
+    { dx: 0, dy: p.r + 32, anchor: 'middle' },
+  ];
+  for (const c of cands) {
+    const x = p.cx + c.dx;
+    const y = p.cy + c.dy;
+    const x1 = c.anchor === 'middle' ? x - w / 2 : c.anchor === 'start' ? x : x - w;
+    const box = { x1, y1: y - h + 3, x2: x1 + w, y2: y + 4 };
+    if (box.x1 < 4 || box.x2 > W - 4 || box.y1 < 4 || box.y2 > H - 24) continue;
+    if (placed.some((q) => hit(box, q))) continue;
+    placed.push(box);
+    return { ...p, lx: x, ly: y, anchor: c.anchor };
+  }
+  // どこにも置けなければ真上に重ねる(白フチが効くので最低限読める)
+  return { ...p, lx: p.cx, ly: p.cy - p.r - 7, anchor: 'middle' };
+});
+---
+
+<Base title="作風マップ" description="貴志祐介の全作品を「恐怖度 × 知的興奮」の平面に配置した散布図。ジャンルごとの重心が見えます。">
+  <h1>作風マップ</h1>
+  <p class="muted">
+    横軸が<strong>知的興奮</strong>(仕掛けや理屈を味わう度合い)、縦軸が<strong>恐怖度</strong>。円の大きさは<strong>疾走感</strong>、色は<strong>ジャンル</strong>です。
+    <strong>読了にした作品は塗りつぶし</strong>、未読の作品は輪郭だけで表示されます。
+  </p>
+  <p class="cw">
+    <strong>この配置は管理人の主観です。</strong>
+    公式の指標ではなく、どの作品がどのくらい怖いか・頭を使うかを、読んだ印象から相対的に置いたものにすぎません。
+  </p>
+
+  <div class="chips legend">
+    {Object.entries(genres).filter(([k]) => k !== 'other').map(([k, v]) => (
+      <span class="legend-item"><span class="legend-dot" style={`background: var(--genre-${k})`}></span>{v}</span>
+    ))}
+    <span class="legend-item"><span class="legend-dot legend-open"></span>未読</span>
+  </div>
+
+  <div class="scroll-x map-wrap card">
+    <svg viewBox={`0 0 ${W} ${H}`} class="map-svg" role="img" aria-label="全作品を恐怖度と知的興奮で配置した散布図">
+      {xTicks.map((v) => (
+        <>
+          <line x1={px(v)} y1={PAD.t} x2={px(v)} y2={H - PAD.b} class="grid" />
+          <text x={px(v)} y={H - PAD.b + 18} class="tick" text-anchor="middle">{v}</text>
+        </>
+      ))}
+      {yTicks.map((v) => (
+        <>
+          <line x1={PAD.l} y1={py(v)} x2={W - PAD.r} y2={py(v)} class="grid" />
+          <text x={PAD.l - 10} y={py(v) + 4} class="tick" text-anchor="end">{v}</text>
+        </>
+      ))}
+      <line x1={PAD.l} y1={H - PAD.b} x2={W - PAD.r} y2={H - PAD.b} class="axis" />
+      <line x1={PAD.l} y1={PAD.t} x2={PAD.l} y2={H - PAD.b} class="axis" />
+      <text x={(W + PAD.l) / 2} y={H - 12} class="axis-title" text-anchor="middle">知的興奮 →</text>
+      <text x="16" y={(H - PAD.b + PAD.t) / 2} class="axis-title" text-anchor="middle" transform={`rotate(-90 16 ${(H - PAD.b + PAD.t) / 2})`}>恐怖度 →</text>
+
+      {laid.map((p) => (
+        <a href={`${base}works/${p.id}/`} class="pt-link">
+          <circle
+            cx={p.cx}
+            cy={p.cy}
+            r={p.r}
+            class="pt"
+            data-work={p.id}
+            style={`--g: var(--genre-${p.genre})`}
+          >
+            <title>{p.title}(恐怖度 {p.axes.fear} / 知的興奮 {p.axes.brain} / 疾走感 {p.axes.pace})</title>
+          </circle>
+          <text x={p.lx} y={p.ly} class="pt-label" text-anchor={p.anchor}>{p.title}</text>
+        </a>
+      ))}
+    </svg>
+  </div>
+
+  <h2 class="section-title">四隅にあるのはどんな作品か</h2>
+  <div class="grid grid-2 corners">
+    <div class="card corner"><strong>右上 — 怖くて、しかも頭を使う</strong><p class="muted">『天使の囀り』『新世界より』。理屈が通っていることが救いにならない、という貴志祐介の中核。</p></div>
+    <div class="card corner"><strong>左上 — 純度の高い恐怖</strong><p class="muted">『黒い家』『さかさ星』『悪の教典』。逃げ場を塞がれる感覚が主。</p></div>
+    <div class="card corner"><strong>右下 — 怖くないが仕掛けは重厚</strong><p class="muted">防犯探偵・榎本シリーズの4冊。ホラーが苦手な人の入口はここ。</p></div>
+    <div class="card corner"><strong>大きな円 — 一気に読める</strong><p class="muted">『悪の教典』『雀蜂』『クリムゾンの迷宮』。円の大きさは疾走感を表しています。</p></div>
+  </div>
+
+  <p class="muted"><a href={`${base}guide/`}>どこから読むか迷ったら、読書ガイド診断へ →</a></p>
+</Base>
+
+<script is:inline>
+  (() => {
+    const apply = () => {
+      const read = new Set(window.KISHI ? window.KISHI.read : []);
+      document.querySelectorAll('.pt[data-work]').forEach((c) => {
+        c.classList.toggle('pt-read', read.has(c.dataset.work));
+      });
+    };
+    document.addEventListener('kishi:read', apply);
+    window.addEventListener('DOMContentLoaded', apply);
+  })();
+</script>
+
+<style>
+  h1 { margin-bottom: 0.3rem; }
+  .legend { gap: 14px; margin: 14px 0; font-size: 0.82rem; }
+  .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .legend-dot {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .legend-open { background: none; border: 2px solid var(--ink-2); }
+
+  .map-wrap { padding: 10px; margin-bottom: 8px; }
+  .map-svg { display: block; min-width: 800px; width: 100%; }
+  .grid { stroke: var(--line); stroke-width: 1; }
+  .axis { stroke: var(--ink-2); stroke-width: 1.5; }
+  .tick { fill: var(--ink-2); font-size: 12px; }
+  .axis-title { fill: var(--ink-2); font-size: 13px; font-weight: 700; }
+
+  .pt {
+    fill: none;
+    stroke: var(--g);
+    stroke-width: 2.5;
+    transition: fill 0.15s;
+  }
+  .pt-read { fill: var(--g); fill-opacity: 0.82; }
+  .pt-link:hover .pt { stroke-width: 4; }
+  .pt-label {
+    fill: var(--ink);
+    font-size: 12px;
+    paint-order: stroke;
+    stroke: var(--surface);
+    stroke-width: 3.5;
+    stroke-linejoin: round;
+  }
+  .pt-link { cursor: pointer; }
+
+  .corners { margin-bottom: 18px; }
+  .corner { padding: 14px 16px; }
+  .corner p { margin: 4px 0 0; font-size: 0.85rem; }
+</style>

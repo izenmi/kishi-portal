@@ -1,0 +1,197 @@
+---
+import Base from '../layouts/Base.astro';
+import WorkSymbol from '../components/WorkSymbol.astro';
+import worksData from '../data/works.json';
+import timelineData from '../data/timeline.json';
+
+const base = import.meta.env.BASE_URL;
+const { works, genres } = worksData;
+const byId = Object.fromEntries(works.map((w) => [w.id, w]));
+const novels = works.filter((w) => !w.partial);
+
+const pickup = ['kuroiie', 'shinsekai', 'akunokyouten', 'aonohonoo', 'kagi', 'sakasaboshi'].map((id) => byId[id]);
+const latest = [...works].sort((a, b) => b.ym.localeCompare(a.ym)).slice(0, 3);
+const prizeCount = timelineData.entries.filter((e) => e.kind === 'award' && !e.title.includes('候補')).length;
+
+const entries = [
+  {
+    href: `${base}guide/`,
+    icon: '🧭',
+    title: '読書ガイド診断',
+    text: '6つの質問に答えると、いま読むべき1冊を推薦します。すでに読了にした作品は候補から外れます。',
+  },
+  {
+    href: `${base}map/`,
+    icon: '🗺️',
+    title: '作風マップ',
+    text: 'ホラー・ミステリ・SFにまたがる全作品を「恐怖度 × 知的興奮」の平面に配置しました。',
+  },
+  {
+    href: `${base}works/`,
+    icon: '📚',
+    title: '作品一覧',
+    text: `長編と短編集あわせて${works.length}作。ジャンル・シリーズで絞り込めます。`,
+  },
+  {
+    href: `${base}characters/`,
+    icon: '👤',
+    title: '人物名鑑',
+    text: '作品をまたいで人物を一覧に。未読の作品の人物は自動で伏せられます。',
+  },
+  {
+    href: `${base}media/`,
+    icon: '🎬',
+    title: '映像化・漫画化',
+    text: '映画5本、ドラマ、アニメ全25話、漫画6作。原作の刊行と並べた年表つき。',
+  },
+  {
+    href: `${base}timeline/`,
+    icon: '📖',
+    title: '年譜',
+    text: '生い立ちから最新作まで。経歴・刊行・受賞・映像化を一本の時間軸に並べました。',
+  },
+];
+---
+
+<Base description="小説家・貴志祐介の非公式ファンサイト。全小説の作品ガイド・作風マップ・読書ガイド診断・作品横断の人物名鑑を、「読んだ作品だけ解禁される」ネタバレ制御つきで。">
+  <section class="hero card">
+    <div class="hero-body">
+      <p class="hero-eyebrow">貴志祐介 非公式ファンサイト</p>
+      <h1>深淵の書架</h1>
+      <p class="hero-lead">
+        ホラーで出発し、ミステリでもSFでも賞を獲った作家の全小説を、1冊ずつ棚に並べました。
+        右上の <strong>📖</strong> から<strong>読んだ作品にチェック</strong>を入れてください。
+        チェックした作品の情報だけが解禁され、まだ読んでいない作品の結末・仕掛け・人物は自動で伏せられます。
+      </p>
+      <div class="hero-actions">
+        <a class="primary-btn" href={`${base}guide/`}>次に読む1冊を診断する</a>
+        <a class="share-btn" href={`${base}works/`}>作品一覧を見る</a>
+      </div>
+    </div>
+    <dl class="hero-stats">
+      <div><dt>収録作品</dt><dd>{works.length}</dd></div>
+      <div><dt>受賞</dt><dd>{prizeCount}</dd></div>
+      <div><dt>映像化</dt><dd>8</dd></div>
+    </dl>
+  </section>
+
+  <h2 class="section-title">まずここから</h2>
+  <div class="grid grid-3 pickup">
+    {pickup.map((w) => (
+      <a class="pick-card card" href={`${base}works/${w.id}/`}>
+        <WorkSymbol id={w.id} genre={w.genre} size={82} title={w.title} />
+        <div class="pick-body">
+          <span class="genre" data-genre={w.genre}>{genres[w.genre]}</span>
+          <strong class="pick-title">{w.title}</strong>
+          <span class="muted pick-year">{w.year}年</span>
+          <p class="pick-line">{w.logline}</p>
+        </div>
+      </a>
+    ))}
+  </div>
+
+  <h2 class="section-title">このサイトでできること</h2>
+  <div class="grid grid-2 entries">
+    {entries.map((e) => (
+      <a class="entry-card card" href={e.href}>
+        <span class="entry-icon">{e.icon}</span>
+        <span>
+          <strong>{e.title}</strong>
+          <p class="muted">{e.text}</p>
+        </span>
+      </a>
+    ))}
+  </div>
+
+  <h2 class="section-title">新しい順に3冊</h2>
+  <ul class="latest">
+    {latest.map((w) => (
+      <li>
+        <span class="muted latest-ym">{w.ym.replace('-', '年')}月</span>
+        <a href={`${base}works/${w.id}/`}>{w.title}</a>
+        <span class="muted"> — {w.publisher}</span>
+      </li>
+    ))}
+  </ul>
+
+  <p class="muted foot-note">
+    当サイトは非公式のファンサイトです。掲載しているあらすじ・書誌は日本語版Wikipediaおよび各版元の商品ページで確認したものを、管理人が自分の言葉でまとめ直しています。
+    詳しくは<a href={`${base}about/`}>このサイトについて</a>をご覧ください。
+  </p>
+</Base>
+
+<style>
+  .hero {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px;
+    flex-wrap: wrap;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 10%, var(--surface)), var(--surface));
+  }
+  .hero-body { min-width: 0; flex: 1 1 340px; }
+  .hero-eyebrow {
+    font-size: 0.76rem;
+    letter-spacing: 0.14em;
+    color: var(--ink-2);
+    margin: 0;
+  }
+  .hero h1 { font-size: 2.1rem; margin: 2px 0 10px; letter-spacing: 0.06em; }
+  .hero-lead { margin: 0 0 16px; font-size: 0.96rem; }
+  .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .hero-stats {
+    display: flex;
+    gap: 20px;
+    margin: 0;
+    flex: none;
+  }
+  .hero-stats div { text-align: center; }
+  .hero-stats dt { font-size: 0.72rem; color: var(--ink-2); }
+  .hero-stats dd {
+    margin: 0;
+    font-size: 1.9rem;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1.2;
+  }
+
+  .pick-card {
+    display: flex;
+    gap: 12px;
+    padding: 14px;
+    text-decoration: none;
+    align-items: flex-start;
+  }
+  .pick-card:hover { border-color: var(--accent); }
+  .pick-body { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .pick-body .genre { align-self: flex-start; }
+  .pick-title { font-size: 1rem; margin-top: 3px; }
+  .pick-year { font-size: 0.76rem; }
+  .pick-line { font-size: 0.83rem; margin: 4px 0 0; }
+
+  .entry-card {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    text-decoration: none;
+    align-items: flex-start;
+  }
+  .entry-card:hover { border-color: var(--accent); }
+  .entry-icon { font-size: 1.5rem; line-height: 1.2; }
+  .entry-card p { margin: 4px 0 0; font-size: 0.85rem; }
+
+  .latest { list-style: none; padding: 0; }
+  .latest li {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    flex-wrap: wrap;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.94rem;
+  }
+  .latest-ym { font-size: 0.8rem; min-width: 6.5em; }
+
+  .foot-note { font-size: 0.8rem; margin-top: 28px; }
+</style>

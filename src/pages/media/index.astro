@@ -1,0 +1,168 @@
+---
+import Base from '../../layouts/Base.astro';
+import mediaData from '../../data/media.json';
+import worksData from '../../data/works.json';
+
+const base = import.meta.env.BASE_URL;
+const { items, types, appearances } = mediaData;
+const workById = Object.fromEntries(worksData.works.map((w) => [w.id, w]));
+
+// 年表: 原作の刊行と映像化を同じ時間軸に並べる
+const pubEvents = worksData.works
+  .filter((w) => items.some((m) => m.workId === w.id))
+  .map((w) => ({ year: w.year, kind: 'pub' as const, title: `『${w.title}』刊行`, workId: w.id }));
+const mediaEvents = items.map((m) => ({
+  year: m.year,
+  kind: m.type,
+  title: `${types[m.type].label}『${m.title}』`,
+  workId: m.workId,
+}));
+const all = [...pubEvents, ...mediaEvents].sort((a, b) => a.year - b.year || a.kind.localeCompare(b.kind));
+
+const minY = Math.min(...all.map((e) => e.year));
+const maxY = Math.max(...all.map((e) => e.year));
+const years = Array.from({ length: maxY - minY + 1 }, (_, i) => minY + i);
+
+const grouped = Object.entries(types).map(([k, v]) => ({
+  key: k,
+  ...v,
+  list: items.filter((m) => m.type === k),
+}));
+---
+
+<Base title="映像化・漫画化" description="貴志祐介作品の映画・ドラマ・アニメ・漫画の一覧と、原作の刊行と並べた年表。">
+  <h1>映像化・漫画化</h1>
+  <p class="muted">
+    映画5本、連続ドラマ1本、配信ドラマ1本、テレビアニメ1本、漫画6作。
+    著者自身が映画やドラマ、アニメに出演していることでも知られています。
+  </p>
+
+  <h2 class="section-title">原作と映像化の年表</h2>
+  <div class="scroll-x tl-wrap card">
+    <table class="tl-table">
+      <tbody>
+        {years.map((y) => {
+          const row = all.filter((e) => e.year === y);
+          return (
+            <tr class={row.length === 0 ? 'empty' : ''}>
+              <th class="tl-year">{y}</th>
+              <td>
+                <div class="tl-cells">
+                  {row.map((e) => (
+                    <a
+                      class="tl-cell"
+                      href={`${base}works/${e.workId}/`}
+                      style={`--c: ${e.kind === 'pub' ? 'var(--accent)' : types[e.kind].color}`}
+                    >
+                      <span class="tl-kind">{e.kind === 'pub' ? '原作' : types[e.kind].label}</span>
+                      {e.title}
+                    </a>
+                  ))}
+                </div>
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+  <p class="muted small">
+    赤が原作小説の刊行、それ以外が媒体展開です。『黒い家』は日本と韓国で2度映画化されています。
+  </p>
+
+  {grouped.filter((g) => g.list.length > 0).map((g) => (
+    <>
+      <h2 class="section-title">{g.label}({g.list.length}本)</h2>
+      <div class="grid media-grid">
+        {g.list.map((m) => (
+          <article class="card media-card" style={`--c:${g.color}`}>
+            <div class="media-head">
+              <span class="media-type" style={`background:${g.color}`}>{g.label}</span>
+              <span class="muted media-year">{m.date ?? m.year}</span>
+            </div>
+            <h3>{m.title}</h3>
+            <p class="media-origin muted">
+              原作: <a href={`${base}works/${m.workId}/`}>『{workById[m.workId]?.title ?? m.workId}』</a>
+            </p>
+            <p class="media-staff">{m.staff}</p>
+            {m.cast && <p class="media-cast">出演: {m.cast}</p>}
+            {m.note && <p class="muted media-note">{m.note}</p>}
+          </article>
+        ))}
+      </div>
+    </>
+  ))}
+
+  <h2 class="section-title">著者本人の出演</h2>
+  <ul class="appear">
+    {appearances.map((a) => (
+      <li><span class="muted appear-year">{a.year}年</span> {a.title} — <strong>{a.role}</strong></li>
+    ))}
+  </ul>
+  <p class="muted small">
+    映像化された自作にたびたび顔を出しています。『鍵のかかった部屋』では毒島薫という役名まで与えられています。
+  </p>
+</Base>
+
+<style>
+  h1 { margin-bottom: 0.3rem; }
+  .tl-wrap { padding: 8px 12px; }
+  .tl-table { border-collapse: collapse; width: 100%; min-width: 560px; }
+  .tl-table th, .tl-table td { padding: 3px 8px; vertical-align: middle; }
+  .tl-year {
+    width: 4.6em;
+    text-align: right;
+    font-size: 0.82rem;
+    color: var(--ink-2);
+    font-weight: 700;
+    border-right: 2px solid var(--line);
+  }
+  .tl-table tr.empty .tl-year { opacity: 0.4; }
+  .tl-table tr.empty td { height: 12px; }
+  .tl-cells { display: flex; flex-wrap: wrap; gap: 6px; padding: 3px 0; }
+  .tl-cell {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    text-decoration: none;
+    border-left: 4px solid var(--c);
+    background: var(--surface-2);
+    border-radius: 0 6px 6px 0;
+    padding: 3px 10px 3px 8px;
+  }
+  .tl-cell:hover { background: color-mix(in srgb, var(--c) 16%, var(--surface-2)); }
+  .tl-kind {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--c);
+  }
+
+  .media-grid { grid-template-columns: 1fr; }
+  @media (min-width: 720px) {
+    .media-grid { grid-template-columns: 1fr 1fr; }
+  }
+  .media-card { padding: 15px 17px; border-top: 3px solid var(--c); }
+  .media-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .media-type {
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.1em 0.7em;
+    border-radius: 999px;
+  }
+  .media-year { font-size: 0.78rem; }
+  .media-card h3 { margin: 8px 0 2px; font-size: 1.08rem; }
+  .media-origin { font-size: 0.8rem; margin: 0 0 8px; }
+  .media-staff, .media-cast { font-size: 0.85rem; margin: 3px 0; }
+  .media-note { font-size: 0.8rem; margin: 8px 0 0; }
+
+  .appear { list-style: none; padding: 0; }
+  .appear li {
+    padding: 7px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.9rem;
+  }
+  .appear-year { font-size: 0.8rem; margin-right: 6px; }
+  .small { font-size: 0.83rem; }
+</style>

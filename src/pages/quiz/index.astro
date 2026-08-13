@@ -1,0 +1,233 @@
+---
+import Base from '../../layouts/Base.astro';
+import quizData from '../../data/quiz.json';
+import worksData from '../../data/works.json';
+
+const base = import.meta.env.BASE_URL;
+const titles = Object.fromEntries(worksData.works.map((w) => [w.id, w.title]));
+const authorCount = quizData.questions.filter((q) => q.sp === null).length;
+---
+
+<Base title="クイズ" description="貴志祐介と作品についての知識クイズ。まだ読んでいない作品の設問は自動で出題対象から外れます。">
+  <h1>知識クイズ</h1>
+  <p class="muted">
+    全{quizData.questions.length}問。<strong>まだ読了にしていない作品の設問は出題されません</strong>ので、
+    ネタバレを踏まずに挑戦できます(作家についての{authorCount}問は常に出題されます)。
+  </p>
+
+  <div class="panel card" id="start-panel">
+    <p id="pool-line"></p>
+    <label class="count-label">
+      出題数:
+      <select id="count-select"></select>
+    </label>
+    <div class="end-actions">
+      <button class="primary-btn" id="start">はじめる</button>
+      <a class="share-btn" href={`${base}works/`}>作品一覧を見る</a>
+    </div>
+  </div>
+
+  <div class="panel card" id="quiz-panel" hidden>
+    <div class="progress-line">
+      <span id="q-index"></span>
+      <span id="q-score"></span>
+    </div>
+    <p class="muted q-src" id="q-src"></p>
+    <h2 id="q-text"></h2>
+    <div class="choices" id="q-choices"></div>
+    <div id="q-exp" class="exp" hidden>
+      <p id="exp-text"></p>
+      <button class="primary-btn" id="next">次の問題へ</button>
+    </div>
+  </div>
+
+  <div class="panel card" id="result-panel" hidden>
+    <h2>結果</h2>
+    <p class="score-line">
+      <span class="rank" id="rank-badge"></span>
+      <strong id="score-text"></strong>
+    </p>
+    <p id="rank-comment"></p>
+    <ul class="wrong-list" id="wrong-list"></ul>
+    <div class="end-actions">
+      <button class="primary-btn" id="retry">もう一度</button>
+      <a class="share-btn" id="share" href="#" target="_blank" rel="noopener">結果をXでシェア</a>
+    </div>
+  </div>
+</Base>
+
+<script is:inline define:vars={{ quiz: quizData, titles, base }}>
+  (() => {
+    const el = (id) => document.getElementById(id);
+    let pool = [];
+    let set = [];
+    let idx = 0;
+    let score = 0;
+    let wrong = [];
+
+    const availableQuestions = () => {
+      const read = new Set(window.KISHI ? window.KISHI.read : []);
+      return quiz.questions.filter((q) => q.sp === null || read.has(q.sp));
+    };
+
+    const refreshStart = () => {
+      pool = availableQuestions();
+      const locked = quiz.questions.length - pool.length;
+      el('pool-line').innerHTML =
+        `いま出題できるのは <strong>${pool.length}問</strong> です。` +
+        (locked > 0
+          ? `<br><span class="muted">未読の作品に関する ${locked}問 は出題対象から外れています。右上の📖で読んだ作品を追加すると増えます。</span>`
+          : '<br><span class="muted">全問が出題対象です。</span>');
+      const sel = el('count-select');
+      const opts = [5, 10, 15, 20, 25, 30].filter((n) => n <= pool.length);
+      if (opts.length === 0 || opts[opts.length - 1] !== pool.length) opts.push(pool.length);
+      sel.innerHTML = '';
+      opts.forEach((n) => {
+        const o = document.createElement('option');
+        o.value = String(n);
+        o.textContent = `${n}問`;
+        sel.appendChild(o);
+      });
+      sel.value = String(opts[Math.min(1, opts.length - 1)]);
+      el('start').disabled = pool.length === 0;
+    };
+
+    const shuffle = (a) => {
+      const r = [...a];
+      for (let i = r.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [r[i], r[j]] = [r[j], r[i]];
+      }
+      return r;
+    };
+
+    const renderQ = () => {
+      const q = set[idx];
+      el('q-index').textContent = `第${idx + 1}問 / 全${set.length}問`;
+      el('q-score').textContent = `正解 ${score}`;
+      el('q-src').textContent = q.sp ? `『${titles[q.sp]}』より` : '貴志祐介について';
+      el('q-text').textContent = q.q;
+      el('q-exp').hidden = true;
+      const box = el('q-choices');
+      box.innerHTML = '';
+      q.order.forEach((oi) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'choice-btn';
+        b.textContent = q.opts[oi];
+        b.addEventListener('click', () => {
+          const correct = oi === q.a;
+          if (correct) score++;
+          else wrong.push(q);
+          box.querySelectorAll('.choice-btn').forEach((x) => (x.disabled = true));
+          b.classList.add(correct ? 'correct' : 'wrong');
+          [...box.children].forEach((x, i) => {
+            if (q.order[i] === q.a) x.classList.add('correct');
+          });
+          el('exp-text').textContent = (correct ? '正解! ' : '不正解。') + q.exp;
+          el('q-exp').hidden = false;
+          el('q-score').textContent = `正解 ${score}`;
+        });
+        box.appendChild(b);
+      });
+    };
+
+    const showResult = () => {
+      const pct = Math.round((score / set.length) * 100);
+      const rank = pct >= 90 ? 'A' : pct >= 70 ? 'B' : pct >= 50 ? 'C' : pct >= 30 ? 'D' : 'E';
+      const comment = {
+        A: '完璧です。深淵の書架の司書を名乗れます。',
+        B: '相当な読み手です。取りこぼした数問を確かめてみてください。',
+        C: '主要作は押さえられています。ここから広げましょう。',
+        D: 'まだ読んでいない作品が多そうです。読書ガイド診断で次の1冊を選んでみては。',
+        E: 'これからが楽しみです。まずは『黒い家』か『新世界より』から。',
+      }[rank];
+      el('rank-badge').textContent = rank;
+      el('rank-badge').dataset.rank = rank;
+      el('score-text').textContent = `${set.length}問中 ${score}問正解 (${pct}%)`;
+      el('rank-comment').textContent = comment;
+
+      const wl = el('wrong-list');
+      wl.innerHTML = '';
+      if (wrong.length) {
+        const h = document.createElement('li');
+        h.className = 'wrong-head';
+        h.textContent = '間違えた問題';
+        wl.appendChild(h);
+        wrong.forEach((q) => {
+          const li = document.createElement('li');
+          li.innerHTML = `<strong>${q.q}</strong><br><span class="muted">正解: ${q.opts[q.a]} — ${q.exp}</span>`;
+          wl.appendChild(li);
+        });
+      }
+
+      const text = `貴志祐介ポータルの知識クイズで ${set.length}問中${score}問正解(判定${rank})でした。`;
+      el('share').href =
+        'https://twitter.com/intent/tweet?text=' +
+        encodeURIComponent(text) +
+        '&url=' +
+        encodeURIComponent(location.href);
+
+      el('quiz-panel').hidden = true;
+      el('result-panel').hidden = false;
+    };
+
+    el('next').addEventListener('click', () => {
+      idx++;
+      if (idx < set.length) renderQ();
+      else showResult();
+    });
+
+    el('start').addEventListener('click', () => {
+      const n = Number(el('count-select').value);
+      set = shuffle(pool)
+        .slice(0, n)
+        .map((q) => ({ ...q, order: shuffle(q.opts.map((_, i) => i)) }));
+      idx = 0;
+      score = 0;
+      wrong = [];
+      el('start-panel').hidden = true;
+      el('result-panel').hidden = true;
+      el('quiz-panel').hidden = false;
+      renderQ();
+    });
+
+    el('retry').addEventListener('click', () => {
+      el('result-panel').hidden = true;
+      el('start-panel').hidden = false;
+      refreshStart();
+    });
+
+    document.addEventListener('kishi:read', () => {
+      if (!el('start-panel').hidden) refreshStart();
+    });
+    window.addEventListener('DOMContentLoaded', refreshStart);
+  })();
+</script>
+
+<style>
+  h1 { margin-bottom: 0.3rem; }
+  .count-label { display: block; margin: 14px 0; font-size: 0.88rem; }
+  .count-label select {
+    margin-left: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+  }
+  .q-src { font-size: 0.78rem; margin: 10px 0 0; }
+  #q-text { font-size: 1.12rem; margin: 4px 0 0; }
+  .exp {
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+    margin-top: 6px;
+  }
+  .exp p { font-size: 0.9rem; margin: 0 0 12px; }
+  .score-line { display: flex; align-items: center; gap: 12px; font-size: 1.1rem; }
+  .score-line .rank { font-size: 1.4rem; padding: 0.1em 0.5em; }
+  .wrong-list { list-style: none; padding: 0; margin: 18px 0; }
+  .wrong-list li { padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 0.88rem; }
+  .wrong-head { font-weight: 700; border-bottom: none !important; padding-bottom: 0 !important; }
+</style>

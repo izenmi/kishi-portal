@@ -1,0 +1,65 @@
+{
+  "note": "日本語版Wikipedia「貴志祐介」の受賞・候補歴およびミステリ・ランキングの節に基づく。ランキングは掲載年(版の年)で表記した。",
+  "prizes": [
+    { "year": 1986, "name": "第12回 ハヤカワ・SFコンテスト", "result": "佳作", "target": "「凍った嘴」", "workId": "shinsekai", "note": "「岸祐介」名義。のちの『新世界より』の原点" },
+    { "year": 1996, "name": "第3回 日本ホラー小説大賞", "result": "長編賞佳作", "target": "『ISOLA』", "workId": "isola", "note": "『十三番目の人格 ISOLA』と改題して刊行" },
+    { "year": 1997, "name": "第4回 日本ホラー小説大賞", "result": "受賞", "target": "『黒い家』", "workId": "kuroiie", "note": "" },
+    { "year": 2000, "name": "第21回 吉川英治文学新人賞", "result": "候補", "target": "『青の炎』", "workId": "aonohonoo", "note": "" },
+    { "year": 2000, "name": "第13回 山本周五郎賞", "result": "候補", "target": "『青の炎』", "workId": "aonohonoo", "note": "" },
+    { "year": 2005, "name": "第58回 日本推理作家協会賞", "result": "受賞", "target": "『硝子のハンマー』", "workId": "glass", "note": "長編及び連作短編集部門" },
+    { "year": 2008, "name": "第29回 日本SF大賞", "result": "受賞", "target": "『新世界より』", "workId": "shinsekai", "note": "" },
+    { "year": 2009, "name": "第30回 吉川英治文学新人賞", "result": "候補", "target": "『新世界より』", "workId": "shinsekai", "note": "" },
+    { "year": 2010, "name": "第1回 山田風太郎賞", "result": "受賞", "target": "『悪の教典』", "workId": "akunokyouten", "note": "" },
+    { "year": 2010, "name": "第144回 直木三十五賞", "result": "候補", "target": "『悪の教典』", "workId": "akunokyouten", "note": "" },
+    { "year": 2011, "name": "第32回 吉川英治文学新人賞", "result": "候補", "target": "『悪の教典』", "workId": "akunokyouten", "note": "" },
+    { "year": 2011, "name": "第23回 将棋ペンクラブ大賞", "result": "特別賞", "target": "『ダークゾーン』", "workId": "darkzone", "note": "" },
+    { "year": 2018, "name": "第18回 本格ミステリ大賞", "result": "候補", "target": "『ミステリークロック』", "workId": "mysteryclock", "note": "" },
+    { "year": 2021, "name": "第6回 吉川英治文庫賞", "result": "候補", "target": "『防犯探偵・榎本シリーズ』", "workId": "glass", "note": "シリーズ全体に対する候補" }
+  ],
+  "rankings": [
+    {
+      "name": "週刊文春ミステリーベスト10",
+      "entries": [
+        { "year": 1997, "rank": 4, "workId": "kuroiie" },
+        { "year": 2008, "rank": 9, "workId": "shinsekai" },
+        { "year": 2010, "rank": 1, "workId": "akunokyouten" },
+        { "year": 2017, "rank": 10, "workId": "mysteryclock" },
+        { "year": 2024, "rank": 20, "workId": "usagi" }
+      ]
+    },
+    {
+      "name": "このミステリーがすごい!",
+      "entries": [
+        { "year": 1998, "rank": 2, "workId": "kuroiie" },
+        { "year": 1999, "rank": 5, "workId": "tenshi" },
+        { "year": 2000, "rank": 15, "workId": "aonohonoo" },
+        { "year": 2005, "rank": 6, "workId": "glass" },
+        { "year": 2009, "rank": 5, "workId": "shinsekai" },
+        { "year": 2011, "rank": 1, "workId": "akunokyouten" },
+        { "year": 2012, "rank": 18, "workId": "kagi" },
+        { "year": 2018, "rank": 4, "workId": "mysteryclock" },
+        { "year": 2024, "rank": 26, "workId": "tsuyu" },
+        { "year": 2025, "rank": 23, "workId": "usagi" },
+        { "year": 2026, "rank": 21, "workId": "sakasaboshi" }
+      ]
+    },
+    {
+      "name": "本格ミステリ・ベスト10",
+      "entries": [
+        { "year": 2005, "rank": 5, "workId": "glass" },
+        { "year": 2009, "rank": 10, "workId": "kitsunebi" },
+        { "year": 2012, "rank": 5, "workId": "kagi" },
+        { "year": 2018, "rank": 4, "workId": "mysteryclock" }
+      ]
+    },
+    {
+      "name": "ミステリが読みたい!",
+      "entries": [
+        { "year": 2011, "rank": 2, "workId": "akunokyouten" },
+        { "year": 2012, "rank": 6, "workId": "kagi" },
+        { "year": 2019, "rank": 4, "workId": "mysteryclock" },
+        { "year": 2026, "rank": 18, "workId": "sakasaboshi" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+---
+import Base from '../../layouts/Base.astro';
+import awardsData from '../../data/awards.json';
+import worksData from '../../data/works.json';
+
+const base = import.meta.env.BASE_URL;
+const workById = Object.fromEntries(worksData.works.map((w) => [w.id, w]));
+const { prizes, rankings } = awardsData;
+
+const won = prizes.filter((p) => p.result !== '候補');
+const nominated = prizes.filter((p) => p.result === '候補');
+
+// 作品ごとのランキング入り回数
+const rankCount: Record<string, number> = {};
+rankings.forEach((r) => r.entries.forEach((e) => {
+  rankCount[e.workId] = (rankCount[e.workId] ?? 0) + 1;
+}));
+const rankTop = Object.entries(rankCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+---
+
+<Base title="受賞・ランキング" description="貴志祐介の受賞歴・候補歴と、各年のミステリランキングでの順位。">
+  <h1>受賞・ランキング</h1>
+  <p class="muted">
+    日本語版Wikipedia「貴志祐介」の受賞・候補歴およびミステリ・ランキングの節に基づいています。
+    ランキングは各誌の掲載年(版の年)で表記しました。
+  </p>
+
+  <div class="grid grid-3 summary">
+    <div class="card stat"><dt>受賞</dt><dd>{won.length}</dd></div>
+    <div class="card stat"><dt>候補</dt><dd>{nominated.length}</dd></div>
+    <div class="card stat"><dt>ランキング入り</dt><dd>{Object.values(rankCount).reduce((a, b) => a + b, 0)}</dd></div>
+  </div>
+
+  <h2 class="section-title">受賞</h2>
+  <div class="scroll-x">
+    <table class="data">
+      <thead><tr><th>年</th><th>賞</th><th>結果</th><th>対象</th><th>備考</th></tr></thead>
+      <tbody>
+        {won.map((p) => (
+          <tr>
+            <td class="nowrap">{p.year}</td>
+            <td>{p.name}</td>
+            <td class="nowrap"><strong class="won">{p.result}</strong></td>
+            <td class="nowrap">
+              {workById[p.workId] ? <a href={`${base}works/${p.workId}/`}>{p.target}</a> : p.target}
+            </td>
+            <td class="muted">{p.note || '—'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="section-title">候補</h2>
+  <div class="scroll-x">
+    <table class="data">
+      <thead><tr><th>年</th><th>賞</th><th>対象</th><th>備考</th></tr></thead>
+      <tbody>
+        {nominated.map((p) => (
+          <tr>
+            <td class="nowrap">{p.year}</td>
+            <td>{p.name}</td>
+            <td class="nowrap">
+              {workById[p.workId] ? <a href={`${base}works/${p.workId}/`}>{p.target}</a> : p.target}
+            </td>
+            <td class="muted">{p.note || '—'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  <h2 class="section-title">ミステリ・ランキング</h2>
+  <div class="grid grid-2 rank-grid">
+    {rankings.map((r) => (
+      <div class="card rank-card">
+        <h3>{r.name}</h3>
+        <ul>
+          {[...r.entries].sort((a, b) => a.year - b.year).map((e) => (
+            <li>
+              <span class="muted rank-year">{e.year}年</span>
+              <span class={`rank-pos${e.rank === 1 ? ' first' : ''}`}>第{e.rank}位</span>
+              <a href={`${base}works/${e.workId}/`}>{workById[e.workId]?.title ?? e.workId}</a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </div>
+
+  <h2 class="section-title">ランキング常連の5作</h2>
+  <ol class="top-list">
+    {rankTop.map(([id, n]) => (
+      <li>
+        <a href={`${base}works/${id}/`}>{workById[id]?.title ?? id}</a>
+        <span class="muted"> — {n}誌にランクイン</span>
+      </li>
+    ))}
+  </ol>
+
+  <p class="muted small">
+    2010年の『悪の教典』は『週刊文春ミステリーベスト10』と『このミステリーがすごい!』の両方で第1位を獲得しています。
+  </p>
+</Base>
+
+<style>
+  h1 { margin-bottom: 0.3rem; }
+  .summary { margin: 18px 0; }
+  .stat { padding: 14px; text-align: center; }
+  .stat dt { font-size: 0.76rem; color: var(--ink-2); }
+  .stat dd { margin: 0; font-size: 2rem; font-weight: 800; color: var(--accent); line-height: 1.2; }
+  td.nowrap, th { white-space: nowrap; }
+  .won { color: var(--accent); }
+
+  .rank-card { padding: 15px 18px; }
+  .rank-card h3 { margin: 0 0 8px; font-size: 1rem; }
+  .rank-card ul { list-style: none; padding: 0; margin: 0; }
+  .rank-card li {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    font-size: 0.87rem;
+    padding: 3px 0;
+    flex-wrap: wrap;
+  }
+  .rank-year { font-size: 0.78rem; min-width: 3.6em; }
+  .rank-pos { font-weight: 700; min-width: 4em; }
+  .rank-pos.first { color: var(--accent); }
+  .top-list { padding-left: 1.3em; }
+  .top-list li { margin-bottom: 5px; }
+  .small { font-size: 0.83rem; }
+</style>

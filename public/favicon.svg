@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect x="4" y="4" width="56" height="56" rx="14" fill="#1a1d24"/>
+  <!-- 書架に並ぶ背表紙。一冊だけが深紅 -->
+  <rect x="13" y="15" width="7" height="34" rx="2" fill="#e8e6df"/>
+  <rect x="22" y="15" width="7" height="34" rx="2" fill="#9c2b2b"/>
+  <rect x="31" y="18" width="7" height="31" rx="2" fill="#8b909b"/>
+  <rect x="40" y="15" width="11" height="34" rx="2" fill="#e8e6df" transform="rotate(9 45 32)"/>
+  <rect x="10" y="49" width="44" height="4" rx="2" fill="#5f6672"/>
+</svg>

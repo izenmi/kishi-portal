@@ -1,0 +1,238 @@
+---
+import Base from '../../layouts/Base.astro';
+import guideData from '../../data/guide.json';
+import worksData from '../../data/works.json';
+
+const base = import.meta.env.BASE_URL;
+const candidates = worksData.works
+  .filter((w) => w.axes)
+  .map((w) => ({
+    id: w.id,
+    title: w.title,
+    year: w.year,
+    genre: w.genre,
+    form: w.form,
+    axes: w.axes,
+    logline: w.logline,
+    cw: w.cw,
+  }));
+const genreLabels = worksData.genres;
+---
+
+<Base title="読書ガイド診断" description="6つの質問に答えると、貴志祐介の作品からいま読むべき1冊を推薦します。すでに読了にした作品は候補から外れます。">
+  <h1>読書ガイド診断</h1>
+  <p class="muted">
+    6つの質問から「求めている読み心地」を組み立て、それに最も近い作品を推薦します。
+    <strong>すでに読了にした作品は候補から外れる</strong>ので、右上の📖で読んだ作品にチェックを入れてから始めると精度が上がります。
+  </p>
+
+  <div class="panel card" id="quiz-panel">
+    <div class="progress-line">
+      <span id="q-index">第1問 / 全{guideData.questions.length}問</span>
+      <span id="q-hint" class="muted">直感で選んでください</span>
+    </div>
+    <h2 id="q-text">　</h2>
+    <div class="choices" id="q-choices"></div>
+  </div>
+
+  <div class="panel card" id="result-panel" hidden>
+    <p class="muted" id="result-lead"></p>
+    <div class="top-pick">
+      <span class="genre" id="top-genre"></span>
+      <h2 id="top-title"></h2>
+      <p class="muted" id="top-meta"></p>
+      <p id="top-line"></p>
+      <p class="cw" id="top-cw" hidden></p>
+      <a class="primary-btn" id="top-link" href={base}>この作品のページを見る</a>
+    </div>
+
+    <h3 class="runner-head">次点</h3>
+    <ul class="runners" id="runners"></ul>
+
+    <details class="detail">
+      <summary>あなたが選んだ「読み心地」の目安</summary>
+      <ul id="target-list" class="target-list"></ul>
+      <p class="muted">
+        各作品の4軸は管理人の主観です。全体の位置関係は<a href={`${base}map/`}>作風マップ</a>で確認できます。
+      </p>
+    </details>
+
+    <div class="end-actions">
+      <button class="primary-btn" id="restart">もう一度診断する</button>
+      <a class="share-btn" href={`${base}works/`}>作品一覧を見る</a>
+    </div>
+  </div>
+</Base>
+
+<script is:inline define:vars={{ guide: guideData, candidates, genreLabels, base }}>
+  (() => {
+    const AXES = ['fear', 'brain', 'pace', 'hope'];
+    const AXIS_LABEL = { fear: '恐怖度', brain: '知的興奮', pace: '疾走感', hope: '読後の救い' };
+    const qs = guide.questions;
+
+    let step = 0;
+    let picked = [];
+
+    const el = (id) => document.getElementById(id);
+
+    const renderQuestion = () => {
+      const q = qs[step];
+      el('q-index').textContent = `第${step + 1}問 / 全${qs.length}問`;
+      el('q-text').textContent = q.q;
+      const box = el('q-choices');
+      box.innerHTML = '';
+      q.opts.forEach((o, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'choice-btn';
+        b.textContent = o.t;
+        b.addEventListener('click', () => {
+          picked[step] = o;
+          step++;
+          if (step < qs.length) renderQuestion();
+          else showResult();
+        });
+        box.appendChild(b);
+      });
+    };
+
+    const buildProfile = () => {
+      const sums = {};
+      const counts = {};
+      const genre = {};
+      const cap = {};
+      const floor = {};
+      let form = '';
+      picked.forEach((o) => {
+        if (!o) return;
+        Object.entries(o.target || {}).forEach(([k, v]) => {
+          sums[k] = (sums[k] || 0) + v;
+          counts[k] = (counts[k] || 0) + 1;
+        });
+        Object.entries(o.genre || {}).forEach(([k, v]) => {
+          genre[k] = (genre[k] || 0) + v;
+        });
+        Object.entries(o.cap || {}).forEach(([k, v]) => {
+          if (v === null || v === undefined) return;
+          cap[k] = cap[k] === undefined ? v : Math.min(cap[k], v);
+        });
+        Object.entries(o.floor || {}).forEach(([k, v]) => {
+          floor[k] = floor[k] === undefined ? v : Math.max(floor[k], v);
+        });
+        if (o.form) form = o.form;
+      });
+      const target = {};
+      AXES.forEach((k) => {
+        target[k] = counts[k] ? Math.round(sums[k] / counts[k]) : 50;
+      });
+      return { target, genre, cap, floor, form };
+    };
+
+    const scoreOf = (w, p) => {
+      let dist = 0;
+      AXES.forEach((k) => {
+        dist += Math.abs(p.target[k] - w.axes[k]);
+      });
+      let s = 100 - dist / AXES.length;
+      s += p.genre[w.genre] || 0;
+      if (p.form && w.form === p.form) s += 8;
+      Object.entries(p.cap).forEach(([k, v]) => {
+        if (w.axes[k] > v) s -= (w.axes[k] - v) * 1.5;
+      });
+      Object.entries(p.floor).forEach(([k, v]) => {
+        if (w.axes[k] < v) s -= (v - w.axes[k]) * 1.5;
+      });
+      return s;
+    };
+
+    const showResult = () => {
+      const p = buildProfile();
+      const read = new Set(window.KISHI ? window.KISHI.read : []);
+      const unread = candidates.filter((w) => !read.has(w.id));
+      const pool = unread.length > 0 ? unread : candidates;
+      const ranked = pool
+        .map((w) => ({ w, s: scoreOf(w, p) }))
+        .sort((a, b) => b.s - a.s);
+
+      const top = ranked[0].w;
+      el('result-lead').textContent =
+        unread.length > 0
+          ? `未読の${unread.length}作から、いまの気分に最も近い1冊を選びました。`
+          : guide.closing.readAllText;
+
+      el('top-genre').textContent = genreLabels[top.genre];
+      el('top-genre').dataset.genre = top.genre;
+      el('top-title').textContent = top.title;
+      el('top-meta').textContent = `${top.year}年 / ${top.form}`;
+      el('top-line').textContent = top.logline;
+      el('top-link').href = `${base}works/${top.id}/`;
+      const cw = el('top-cw');
+      if (top.cw && top.cw.length) {
+        cw.innerHTML = `<strong>取り扱う題材:</strong> ${top.cw.join(' / ')}`;
+        cw.hidden = false;
+      } else {
+        cw.hidden = true;
+      }
+
+      const runners = el('runners');
+      runners.innerHTML = '';
+      ranked.slice(1, 4).forEach(({ w }) => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = `${base}works/${w.id}/`;
+        a.textContent = w.title;
+        li.appendChild(a);
+        const span = document.createElement('span');
+        span.className = 'muted';
+        span.textContent = ` (${w.year}年 / ${genreLabels[w.genre]}) — ${w.logline}`;
+        li.appendChild(span);
+        runners.appendChild(li);
+      });
+
+      const tl = el('target-list');
+      tl.innerHTML = '';
+      AXES.forEach((k) => {
+        const li = document.createElement('li');
+        li.textContent = `${AXIS_LABEL[k]}: ${p.target[k]}`;
+        tl.appendChild(li);
+      });
+      if (p.form) {
+        const li = document.createElement('li');
+        li.textContent = `好みの長さ: ${p.form}`;
+        tl.appendChild(li);
+      }
+
+      el('quiz-panel').hidden = true;
+      el('result-panel').hidden = false;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    el('restart').addEventListener('click', () => {
+      step = 0;
+      picked = [];
+      el('result-panel').hidden = true;
+      el('quiz-panel').hidden = false;
+      renderQuestion();
+    });
+
+    renderQuestion();
+  })();
+</script>
+
+<style>
+  h1 { margin-bottom: 0.3rem; }
+  #q-text { font-size: 1.15rem; margin: 12px 0 0; }
+  .top-pick {
+    border-left: 4px solid var(--accent);
+    padding-left: 16px;
+    margin: 14px 0 8px;
+  }
+  .top-pick h2 { margin: 6px 0 2px; font-size: 1.5rem; }
+  .top-pick p { margin: 4px 0 12px; }
+  .runner-head { font-size: 1rem; margin: 22px 0 6px; }
+  .runners { padding-left: 1.2em; }
+  .runners li { margin-bottom: 8px; font-size: 0.9rem; }
+  .detail { margin: 18px 0; font-size: 0.88rem; }
+  .detail summary { cursor: pointer; font-weight: 700; }
+  .target-list { padding-left: 1.2em; margin: 8px 0; }
+</style>
